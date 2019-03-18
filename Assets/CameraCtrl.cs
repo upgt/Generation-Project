@@ -14,16 +14,9 @@ public class CameraCtrl : MonoBehaviour {
     private float X, Y;
 
     public float speed = 10f;
-    private float ThisEulerAnglesX;
-    private float ThisEulerAnglesY;
-    private float ThisEulerAnglesZ;
 
     void Start()
-    {
-        ThisEulerAnglesX = transform.localEulerAngles.x;
-        ThisEulerAnglesY = transform.localEulerAngles.y;
-        ThisEulerAnglesZ = transform.localEulerAngles.z;
-
+    { 
         limit = Mathf.Abs(limit);
         if (limit > 90) limit = 90;
         offset = new Vector3(offset.x, offset.y, -Mathf.Abs(zoomMax) / 2);
