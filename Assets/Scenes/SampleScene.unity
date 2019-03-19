@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.49641287, b: 0.5748173, a: 1}
+  m_IndirectSpecularColor: {r: 0.44535488, g: 0.49500293, b: 0.57398325, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -139,7 +139,7 @@ Light:
   serializedVersion: 8
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.6
   m_Range: 10
   m_SpotAngle: 30
   m_CookieSize: 10
@@ -172,13 +172,13 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 170076733}
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.78867465, y: 0.41309276, z: -0.15416439, w: 0.42846248}
+  m_LocalPosition: {x: 32.2, y: 54.1, z: 60.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 53.437004, y: 169.279, z: 119.302}
 --- !u!1 &534669902
 GameObject:
   m_ObjectHideFlags: 0
@@ -275,18 +275,18 @@ MonoBehaviour:
   zoom: 0.25
   zoomMax: 10
   zoomMin: 3
-  speed: 10
---- !u!1 &1631605785
+  speed: 60
+--- !u!1 &1669335258
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1631605788}
-  - component: {fileID: 1631605787}
-  - component: {fileID: 1631605786}
-  - component: {fileID: 1631605789}
+  - component: {fileID: 1669335261}
+  - component: {fileID: 1669335260}
+  - component: {fileID: 1669335259}
+  - component: {fileID: 1669335262}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -294,22 +294,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
   m_IsActive: 1
---- !u!154 &1631605786
+--- !u!154 &1669335259
 TerrainCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1631605785}
+  m_GameObject: {fileID: 1669335258}
   m_Material: {fileID: 0}
   m_Enabled: 1
   m_TerrainData: {fileID: 15600000, guid: 5ed793d0ea96740698429f316c3bc06e, type: 2}
   m_EnableTreeColliders: 1
---- !u!218 &1631605787
+--- !u!218 &1669335260
 Terrain:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1631605785}
+  m_GameObject: {fileID: 1669335258}
   m_Enabled: 1
   serializedVersion: 3
   m_TerrainData: {fileID: 15600000, guid: 5ed793d0ea96740698429f316c3bc06e, type: 2}
@@ -336,25 +336,25 @@ Terrain:
   m_PreserveTreePrototypeLayers: 0
   m_ScaleInLightmap: 0.1024
   m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
---- !u!4 &1631605788
+--- !u!4 &1669335261
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1631605785}
+  m_GameObject: {fileID: 1669335258}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -0.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1631605789
+--- !u!114 &1669335262
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1631605785}
+  m_GameObject: {fileID: 1669335258}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3bf180aa2793048d48e1950e800039d3, type: 3}
@@ -366,3 +366,6 @@ MonoBehaviour:
   scale: 20
   offsetX: 100
   offsetY: 100
+  mountainHeight: 200
+  MountainAmount: 1
+  flatCoefficient: 0.2
