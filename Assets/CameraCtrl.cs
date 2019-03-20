@@ -13,7 +13,7 @@ public class CameraCtrl : MonoBehaviour {
     public float zoomMin = 3; // мин. увеличение
     private float X, Y;
 
-    public float speed = 10f;
+    public float speed = 50f;
 
     void Start()
     { 
