@@ -193,6 +193,7 @@ GameObject:
   - component: {fileID: 185044609}
   - component: {fileID: 185044608}
   - component: {fileID: 185044611}
+  - component: {fileID: 185044612}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -286,6 +287,29 @@ MonoBehaviour:
   minDist: 15
   maxTreeScale: 35
   minTreeScale: 21
+--- !u!114 &185044612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 185044607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62dc88dae78ca1148937a9dca78990b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roadTextureIndex: 1
+  roadWidth: 5
+  roadFlexure: 20
+  roads:
+  - points:
+    - x: 50
+      z: 50
+    - x: 150
+      z: 150
+    - x: 250
+      z: 50
 --- !u!1 &534669902
 GameObject:
   m_ObjectHideFlags: 0
