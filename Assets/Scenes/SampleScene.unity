@@ -380,6 +380,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roadTextureIndex: 1
   roadWidth: 5
+  roadFlexure: 20
   roads:
   - points:
     - x: 50
