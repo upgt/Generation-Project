@@ -88,7 +88,7 @@ public class RoadsCreator : MonoBehaviour
 
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         TerrainData terrainData = GetComponent<Terrain>().terrainData;
         var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);

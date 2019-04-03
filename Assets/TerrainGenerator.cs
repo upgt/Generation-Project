@@ -40,7 +40,7 @@ public class TreeInfo
         tree.widthScale = scale;
         tree.lightmapColor = Color.white;
         tree.color = Color.white;
-        aloneRadius = scale * 0.1f;
+        aloneRadius = scale * 0.02f;
         parentRadius = scale * 0.5f;
         castType = CastType(scale);
 
@@ -160,13 +160,16 @@ public class TerrainGenerator : MonoBehaviour
         }
     }
 
-    void DrawCastTree(int cast)
+    void DrawCastTree()
     {
-        for (int i = 0; i < trees[cast].Count; i++)
+        for (int i = 0; i < castCount; i++)
         {
-            terrain.AddTreeInstance(trees[cast][i]);
-            terrain.Flush();
+            for (int j = 0; j < trees[i].Count; j++)
+            {
+                terrain.AddTreeInstance(trees[i][j]);
+            }
         }
+        terrain.Flush();
     }
 
     void gTreesQuestZones(int cast)
@@ -179,9 +182,8 @@ public class TerrainGenerator : MonoBehaviour
         }
     }
 
-    int checkParent(int castIndex, Vector2 currentChildIndx)
+    int checkParent(int castIndex, Vector2 currentChildIndx, System.Random rn)
     {
-        System.Random rn = new System.Random();
         List<int> prIndexCollection = new List<int>();
         if (castIndex > 1)
         {
@@ -198,48 +200,55 @@ public class TerrainGenerator : MonoBehaviour
 
         if (prIndexCollection.Count == 0)
         {
-            return rn.Next(0, terrain.terrainData.treePrototypes.Length - 1);
+            return rn.Next(0, terrain.terrainData.treePrototypes.Length);
         }
 
         return prIndexCollection[rn.Next(prIndexCollection.Count)];
     }
 
-    void addCastTree(int castIndx)
+    void addCastTree(int castIndx, System.Random rn)
     {
-        float cTS = castIndx * (maxTreeScale - minTreeScale) / castCount;
-        int maxTS = (int)(maxTreeScale - cTS) * 100;
-        int minTS = (int)(minTreeScale + cTS) * 100;
-
-        System.Random rn = new System.Random();
+        var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
+        
+        int cTextureOnTerH = terrain.terrainData.alphamapHeight/height;
+        int cTextureOnTerW = terrain.terrainData.alphamapWidth/width;
+        int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ
+        float cTS = (maxTreeScale - minTreeScale) / castCount;
+        float scale = (maxTreeScale - (castIndx * cTS)) * 1000;
+        int maxTS = (int)scale;
+        scale = (maxTreeScale - ((castIndx + 1) * cTS)) * 1000;
+        int minTS = (int)scale;
+        
         for (int x = 0; x < width - minDist; x += rn.Next(minDist, maxDist) * castCount)
         {
             for (int z = 0; z < height; z += rn.Next(minDist, maxDist) * castCount)
             {
-                int noiseX = rn.Next(-(int)(minDist * 0.7f), (int)(minDist * 0.7f));
+                int noiseX = rn.Next(-(int)(minDist * 0.5f), (int)(minDist * 0.5f));
                 int xNoise = Math.Abs(x + noiseX);
 
                 Vector2 coord = new Vector2(xNoise, z);
-                //if (!isQZones(coord))
-                //{
+                if (!isQZones(coord) && (alphaMaps[z*cTextureOnTerW, xNoise * cTextureOnTerH,iTextureGraund] < 1))
+                {
                 var position = new Vector3((float)xNoise / width, heightMap[xNoise, z], ((float)z) / height);
-                int prototypeIndex = checkParent(castIndx, coord);
+                int prototypeIndex = checkParent(castIndx, coord,rn);
 
-                var tree = new TreeInfo(position, prototypeIndex, rn.Next(minTS, maxTS) * 0.01f);
+                var tree = new TreeInfo(position, prototypeIndex, rn.Next(minTS, maxTS) * 0.001f);
                 trees[castIndx].Add(tree);
-                //}
+                }
             }
         }
     }
 
-    void gTree(float xTer, float zTer, int de = 1, int ds = 0)
+    void gTree(float xTer, float zTer)
     {
         gCasts();
-        for (int i = ds; i < de/*trees.Count*/; i++)
+        for (int i = 0; i < castCount; i++)
         {
-            addCastTree(i);
+            System.Random rn = new System.Random();
+            addCastTree(i,rn);
             gTreesQuestZones(i);
-            DrawCastTree(i);
         }
+        DrawCastTree();
     }
 
 
@@ -265,13 +274,7 @@ public class TerrainGenerator : MonoBehaviour
         if (terrain.terrainData.treePrototypes.Length > 0)
         {
             Vector3 positionEnd = new Vector3(width + xTerrain, 0, height + zTerrain);    // Крайняя конечная точка ---- это нужно гашану
-            var tree = new TreeInfo(new Vector3(0,0,0), 0, maxTreeScale);
-            terrain.AddTreeInstance(tree);
-            terrain.Flush();
-            tree = new TreeInfo(new Vector3(0.05f, 0, 0), 0, minTreeScale);
-            terrain.AddTreeInstance(tree);
-            terrain.Flush();
-            //gTree(xTerrain, zTerrain);
+            gTree(xTerrain, zTerrain);
         }
 
 
@@ -280,17 +283,6 @@ public class TerrainGenerator : MonoBehaviour
     private void Update()
     {
         casts = castCount;
-        if (ind == 1)
-        {
-            gTree(xTerrain, zTerrain, 2, 1);
-            ind++;
-        }
-
-        if (ind == 2)
-        {
-            gTree(xTerrain, zTerrain, 3, 2);
-            ind++;
-        }
 
         //offsetX += Time.deltaTime * 2f;
     }
