@@ -268,7 +268,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6375a98ad6f18406cadb2b21dba52788, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 0}
+  Position: {x: -76.4, y: 158.9, z: -100.8}
   offset: {x: 0, y: 0, z: 0}
   sensitivity: 6
   limit: 80
@@ -360,12 +360,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bf180aa2793048d48e1950e800039d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depth: 20
+  depth: 200
+  plainDepth: 20
   height: 256
   width: 256
   scale: 20
   offsetX: 100
   offsetY: 100
   mountainHeight: 200
-  MountainAmount: 1
-  flatCoefficient: 0.2
+  mountainX: 100
+  mountainY: 100
+  angle: 30
+  flatCoefficient: 0.05
