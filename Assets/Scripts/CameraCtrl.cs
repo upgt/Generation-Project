@@ -10,12 +10,7 @@ public class CameraCtrl : MonoBehaviour {
     public float zoomMax = 10; // макс. увеличение
     public float zoomMin = 3; // мин. увеличение
     private float X, Y;
-
-<<<<<<< HEAD:Assets/CameraCtrl.cs
-    public float speed = 50f;
-=======
     public float speed = 60f;
->>>>>>> DoroninBranch:Assets/Scripts/CameraCtrl.cs
 
     void Start()
     { 
