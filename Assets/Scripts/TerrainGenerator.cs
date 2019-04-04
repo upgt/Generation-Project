@@ -268,8 +268,8 @@ public class TerrainGenerator : MonoBehaviour
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
         offsetY = UnityEngine.Random.Range(0, 1000f);
-        //Terrain terrain = GetComponent<Terrain>();
-        terrain.terrainData = CreateTerrain(terrain.terrainData);
+        Terrain _terrain = GetComponent<Terrain>();
+        _terrain.terrainData = CreateTerrain(_terrain.terrainData);
 
     }
     private void Update()
