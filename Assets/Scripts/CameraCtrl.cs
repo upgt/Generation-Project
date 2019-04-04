@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CameraCtrl : MonoBehaviour {
 
@@ -51,9 +49,6 @@ public class CameraCtrl : MonoBehaviour {
         Y = Mathf.Clamp(Y, -limit, limit);
         transform.localEulerAngles = new Vector3(-Y, X, 0);
         transform.position = transform.localRotation * offset + Position;
-    }
-
-        
-            
+    }           
 }
 
