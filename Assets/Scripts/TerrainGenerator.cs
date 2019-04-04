@@ -1,7 +1,8 @@
-﻿using Application;
+﻿using System;
 using UnityEngine;
-using System;
 using System.Collections.Generic;
+
+
 
 public class TreeInfo
 {
@@ -74,26 +75,17 @@ public class TreeInfo
     }
 }
 
-
 public class TerrainGenerator : MonoBehaviour
 {
-    public int depth = 200;
-    public int plainDepth = 20;
+    public int depth = 20;
+
+    protected float[,] heightMap;
     public int height = 256;
     public int width = 256;
 
     public float scale = 20f;
     public float offsetX = 100f;
     public float offsetY = 100f;
-
-    public int mountainHeight = 200;
-    public int mountainX = 100;
-    public int mountainY = 100;
-    public double angle = 30f;
-
-    public float flatCoefficient = 0.2f;    //сглаживание шума
-    private float[,] heights;
-
     Terrain terrain;
 
     //Владение гошана
@@ -217,16 +209,16 @@ public class TerrainGenerator : MonoBehaviour
     void addCastTree(int castIndx, System.Random rn)
     {
         var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
-
-        int cTextureOnTerH = terrain.terrainData.alphamapHeight / height;
-        int cTextureOnTerW = terrain.terrainData.alphamapWidth / width;
+        
+        int cTextureOnTerH = terrain.terrainData.alphamapHeight/height;
+        int cTextureOnTerW = terrain.terrainData.alphamapWidth/width;
         int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ
         float cTS = (maxTreeScale - minTreeScale) / castCount;
         float scale = (maxTreeScale - (castIndx * cTS)) * 1000;
         int maxTS = (int)scale;
         scale = (maxTreeScale - ((castIndx + 1) * cTS)) * 1000;
         int minTS = (int)scale;
-
+        
         for (int x = 0; x < width - minDist; x += rn.Next(minDist, maxDist) * castCount)
         {
             for (int z = 0; z < height; z += rn.Next(minDist, maxDist) * castCount)
@@ -235,13 +227,13 @@ public class TerrainGenerator : MonoBehaviour
                 int xNoise = Math.Abs(x + noiseX);
 
                 Vector2 coord = new Vector2(xNoise, z);
-                if (!isQZones(coord) && (alphaMaps[z * cTextureOnTerW, xNoise * cTextureOnTerH, iTextureGraund] < 1))
+                if (!isQZones(coord) && (alphaMaps[z*cTextureOnTerW, xNoise * cTextureOnTerH,iTextureGraund] < 1))
                 {
-                    var position = new Vector3((float)xNoise / width, heights[xNoise, z], ((float)z) / height);
-                    int prototypeIndex = checkParent(castIndx, coord, rn);
+                var position = new Vector3((float)xNoise / width, heightMap[xNoise, z], ((float)z) / height);
+                int prototypeIndex = checkParent(castIndx, coord,rn);
 
-                    var tree = new TreeInfo(position, prototypeIndex, rn.Next(minTS, maxTS) * 0.001f);
-                    trees[castIndx].Add(tree);
+                var tree = new TreeInfo(position, prototypeIndex, rn.Next(minTS, maxTS) * 0.001f);
+                trees[castIndx].Add(tree);
                 }
             }
         }
@@ -253,7 +245,7 @@ public class TerrainGenerator : MonoBehaviour
         for (int i = 0; i < castCount; i++)
         {
             System.Random rn = new System.Random();
-            addCastTree(i, rn);
+            addCastTree(i,rn);
             gTreesQuestZones(i);
         }
         DrawCastTree();
@@ -261,38 +253,52 @@ public class TerrainGenerator : MonoBehaviour
 
 
     // Конец власти Гошана
+
+
     private void Start()
     {
         TreeInfo.maxScale = maxTreeScale;
         TreeInfo.minScale = minTreeScale;
+        terrain = GetComponent<Terrain>(); // ЭТО ОБЯЗ В НАЧАЛЕ ПЛАНЕТЫ СУКА!!!!!!!!!!!!
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
         offsetY = UnityEngine.Random.Range(0, 1000f);
-        //Terrain terrain = GetComponent<Terrain>();
-        terrain.terrainData = CreateTerrain(terrain.terrainData);
 
+
+        terrain.terrainData = CreateTerrain(terrain.terrainData);
+        // Зона Гошана
+
+
+
+        // Работает только тогда когда в массиве деревьев есть хотя бы одно деревоVector3 position = new Vector3(xTerrain, 0, zTerrain);                     // Крайняя начальная точка ---- это нужно гашану
+        if (terrain.terrainData.treePrototypes.Length > 0)
+        {
+            Vector3 positionEnd = new Vector3(width + xTerrain, 0, height + zTerrain);    // Крайняя конечная точка ---- это нужно гашану
+            gTree(xTerrain, zTerrain);
+        }
+
+
+        // Конец зоны Goshana
     }
     private void Update()
     {
         casts = castCount;
-        //Terrain terrain = GetComponent<Terrain>();
-        //terrain.terrainData = CreateTerrain(terrain.terrainData);
-        // offsetX += Time.deltaTime * 2f;
+
+        //offsetX += Time.deltaTime * 2f;
     }
 
-    private TerrainData CreateTerrain(TerrainData terrainData)
+    TerrainData CreateTerrain(TerrainData terrainData)
     {
         terrainData.heightmapResolution = width + 1;
-        terrainData.size = new Vector3(width, plainDepth, height);
-
-        terrainData.SetHeights((int)xTerrain,(int)zTerrain, CreateHeights());              //генерация шумом перлина
-        //terrainData.SetHeights(0, 0, CreateHeightsRed());         //для экспериментов с шумами
+        terrainData.size = new Vector3(width, depth, height);
+        heightMap = CreateHeights();
+        terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
         return terrainData;
     }
 
-    private float[,] CreateHeights()
+    float[,] CreateHeights()
     {
-        heights = new float[width, height];
+        float[,] heights = new float[width, height];
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -303,57 +309,11 @@ public class TerrainGenerator : MonoBehaviour
         return heights;
     }
 
-    private float[,] CreateHeightsRed()
-    {
-        var _heights = new float[width+1, height+1];
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                _heights[x, y] = Noise(x,y);
-            }
-        }
-       
-        return RedNoise(_heights);
-    }
-
-    private float Noise(int x, int y)
-    {
-        return Mathf.Sin(x+y) + Mathf.Cos(x+y);
-    }
-
-    private float[,] RedNoise(float[,] noise)
-    {
-        var _heights = new float[width, height];
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                _heights[i, j] = flatCoefficient * (noise[i, j] + noise[i, j + 1] + noise[i+1, j])/3;
-            }
-        }
-        return _heights;
-    }
-
-    private float CalculateHeight(int x, int y)
+    float CalculateHeight(int x, int y)
     {
         float xCoord = (float)x / width * scale + offsetX;
-        float yCoord = (float)y / height * scale +  offsetY;
+        float yCoord = (float)y / height * scale + offsetY;
 
-        return Mathf.PerlinNoise(xCoord, yCoord) * flatCoefficient;
+        return Mathf.PerlinNoise(xCoord, yCoord);
     }
-
-    //private void AddMountain()
-    //{
-    //    Mountain mountain = new Mountain(mountainHeight, angle);
-    //    int halfWidth = mountain.BaseWidth / 2;
-    //    for (int i = 0; i < mountain.BaseWidth; i++)
-    //        for (int j = 0; j < mountain.BaseWidth; j++)
-    //        {
-    //            if (mountain.Heights[i,j] > 0)
-    //                heights[mountainX - halfWidth + i, mountainY - halfWidth + j] = mountain.Heights[i, j];
-    //        }
-    //}
 }
-
-
