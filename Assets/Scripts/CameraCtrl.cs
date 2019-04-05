@@ -50,4 +50,3 @@ public class CameraCtrl : MonoBehaviour
         transform.position = transform.localRotation * offset + Position;
     }
 }
-
