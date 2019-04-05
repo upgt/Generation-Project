@@ -220,7 +220,7 @@ public class TerrainGenerator : MonoBehaviour
 
         int cTextureOnTerH = terrain.terrainData.alphamapHeight / height;
         int cTextureOnTerW = terrain.terrainData.alphamapWidth / width;
-        int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ
+        int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ   //P.s Ground 
         float cTS = (maxTreeScale - minTreeScale) / castCount;
         float scale = (maxTreeScale - (castIndx * cTS)) * 1000;
         int maxTS = (int)scale;
@@ -268,29 +268,30 @@ public class TerrainGenerator : MonoBehaviour
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
         offsetY = UnityEngine.Random.Range(0, 1000f);
-        Terrain _terrain = GetComponent<Terrain>();
-        _terrain.terrainData = CreateTerrain(_terrain.terrainData);
+        terrain = GetComponent<Terrain>();
+        terrain.terrainData = CreateTerrain(terrain.terrainData);
 
     }
     private void Update()
     {
         casts = castCount;
-        //Terrain terrain = GetComponent<Terrain>();
+        //terrain = GetComponent<Terrain>();
         //terrain.terrainData = CreateTerrain(terrain.terrainData);
-        // offsetX += Time.deltaTime * 2f;
+        //offsetX += Time.deltaTime * 2f;
     }
 
+    //Начало власти Ивана
     private TerrainData CreateTerrain(TerrainData terrainData)
     {
         terrainData.heightmapResolution = width + 1;
         terrainData.size = new Vector3(width, plainDepth, height);
 
-        terrainData.SetHeights((int)xTerrain,(int)zTerrain, CreateHeights());              //генерация шумом перлина
-        //terrainData.SetHeights(0, 0, CreateHeightsRed());         //для экспериментов с шумами
+        terrainData.SetHeights((int)xTerrain, (int)zTerrain, CreateHeightsPN());              //генерация шумом перлина
+        //terrainData.SetHeights(0, 0, CreateHeights());         //для экспериментов с шумами
         return terrainData;
     }
 
-    private float[,] CreateHeights()
+    private float[,] CreateHeightsPN()
     {
         heights = new float[width, height];
         for (int x = 0; x < width; x++)
@@ -303,42 +304,42 @@ public class TerrainGenerator : MonoBehaviour
         return heights;
     }
 
-    private float[,] CreateHeightsRed()
+    private float[,] CreateHeights()
     {
-        var _heights = new float[width+1, height+1];
+        heights = new float[width, height];
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                _heights[x, y] = Noise(x,y);
+                heights[x, y] = Noise(x, y);
             }
         }
-       
-        return RedNoise(_heights);
+
+        return heights;
     }
 
-    private float Noise(int x, int y)
-    {
-        return Mathf.Sin(x+y) + Mathf.Cos(x+y);
+    private float Noise(float x, float y)
+    { 
+        return UnityEngine.Random.Range(-1f * flatCoefficient, 1 * flatCoefficient);
     }
 
-    private float[,] RedNoise(float[,] noise)
-    {
-        var _heights = new float[width, height];
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                _heights[i, j] = flatCoefficient * (noise[i, j] + noise[i, j + 1] + noise[i+1, j])/3;
-            }
-        }
-        return _heights;
-    }
+    //private float[,] RedNoise(float[,] noise)
+    //{
+    //    var _heights = new float[width, height];
+    //    for (int i = 0; i < width; i++)
+    //    {
+    //        for (int j = 0; j < height; j++)
+    //        {
+    //            _heights[i, j] = flatCoefficient * (noise[i, j] + noise[i, j + 1] + noise[i + 1, j]) / 3;
+    //        }
+    //    }
+    //    return _heights;
+    //}
 
     private float CalculateHeight(int x, int y)
     {
         float xCoord = (float)x / width * scale + offsetX;
-        float yCoord = (float)y / height * scale +  offsetY;
+        float yCoord = (float)y / height * scale + offsetY;
 
         return Mathf.PerlinNoise(xCoord, yCoord) * flatCoefficient;
     }
