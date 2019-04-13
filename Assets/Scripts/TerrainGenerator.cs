@@ -92,6 +92,8 @@ public class TerrainGenerator : MonoBehaviour
     public double angle = 30f;
 
     public float flatCoefficient = 0.2f;    //сглаживание шума
+    public double exponent = 1f;
+    public float[] noiseCoefficients;
     private float[,] heights;
 
     Terrain terrain;
@@ -268,15 +270,15 @@ public class TerrainGenerator : MonoBehaviour
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
         offsetY = UnityEngine.Random.Range(0, 1000f);
-        terrain = GetComponent<Terrain>();
-        terrain.terrainData = CreateTerrain(terrain.terrainData);
+        //terrain = GetComponent<Terrain>();
+        //terrain.terrainData = CreateTerrain(terrain.terrainData);
 
     }
     private void Update()
     {
         casts = castCount;
-        //terrain = GetComponent<Terrain>();
-        //terrain.terrainData = CreateTerrain(terrain.terrainData);
+        terrain = GetComponent<Terrain>();
+        terrain.terrainData = CreateTerrain(terrain.terrainData);
         //offsetX += Time.deltaTime * 2f;
     }
 
@@ -341,7 +343,15 @@ public class TerrainGenerator : MonoBehaviour
         float xCoord = (float)x / width * scale + offsetX;
         float yCoord = (float)y / height * scale + offsetY;
 
-        return Mathf.PerlinNoise(xCoord, yCoord) * flatCoefficient;
+        var _height = (Mathf.PerlinNoise(noiseCoefficients[0] * xCoord, noiseCoefficients[0] * yCoord)
+             + 0.5f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)
+             + 0.25f * Mathf.PerlinNoise(noiseCoefficients[2] * xCoord, noiseCoefficients[2] * yCoord)
+             + 0.125f * Mathf.PerlinNoise(noiseCoefficients[3] * xCoord, noiseCoefficients[3] * yCoord)
+             + 0.06f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)) * flatCoefficient;
+
+        _height = (float)Math.Pow(_height, exponent);
+
+        return _height;
     }
 
     //private void AddMountain()
