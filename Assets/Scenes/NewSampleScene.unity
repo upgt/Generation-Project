@@ -216,6 +216,12 @@ MonoBehaviour:
   mountainY: 100
   angle: 30
   flatCoefficient: 0.2
+  exponent: 0.5
+  noiseCoefficients:
+  - 1
+  - 2
+  - 4
+  - 8
   questZones: []
   casts: 0
   maxDist: 4
