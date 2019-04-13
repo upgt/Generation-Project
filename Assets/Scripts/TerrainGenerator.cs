@@ -86,6 +86,11 @@ public class TerrainGenerator : MonoBehaviour
     public float scale = 20f;
     public float offsetX = 100f;
     public float offsetY = 100f;
+
+    public float flatCoefficient = 1f;
+    public float[] noiseCoefficients;
+    public float exponent = 1f;
+
     Terrain terrain;
 
     //Владение гошана
@@ -259,12 +264,12 @@ public class TerrainGenerator : MonoBehaviour
     {
         TreeInfo.maxScale = maxTreeScale;
         TreeInfo.minScale = minTreeScale;
-        terrain = GetComponent<Terrain>(); // ЭТО ОБЯЗ В НАЧАЛЕ ПЛАНЕТЫ СУКА!!!!!!!!!!!!
+
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
         offsetY = UnityEngine.Random.Range(0, 1000f);
 
-
+        terrain = GetComponent<Terrain>(); // ЭТО ОБЯЗ В НАЧАЛЕ ПЛАНЕТЫ СУКА!!!!!!!!!!!!
         terrain.terrainData = CreateTerrain(terrain.terrainData);
         // Зона Гошана
 
@@ -283,6 +288,9 @@ public class TerrainGenerator : MonoBehaviour
     private void Update()
     {
         casts = castCount;
+
+        terrain = GetComponent<Terrain>(); // ЭТО ОБЯЗ В НАЧАЛЕ ПЛАНЕТЫ СУКА!!!!!!!!!!!!
+        terrain.terrainData = CreateTerrain(terrain.terrainData);
 
         //offsetX += Time.deltaTime * 2f;
     }
@@ -314,6 +322,12 @@ public class TerrainGenerator : MonoBehaviour
         float xCoord = (float)x / width * scale + offsetX;
         float yCoord = (float)y / height * scale + offsetY;
 
-        return Mathf.PerlinNoise(xCoord, yCoord) + 0.5f * Mathf.PerlinNoise(2 * xCoord,2 * yCoord) + 0.25f * Mathf.PerlinNoise(4 * xCoord,4 * yCoord);
+        var _height = (Mathf.PerlinNoise(noiseCoefficients[0] * xCoord, noiseCoefficients[0] * yCoord)
+             + 0.5f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)
+             + 0.25f * Mathf.PerlinNoise(noiseCoefficients[2] * xCoord, noiseCoefficients[2] * yCoord)) * flatCoefficient;
+
+        _height = (float)Math.Pow(_height, exponent);
+
+        return _height;
     }
 }
