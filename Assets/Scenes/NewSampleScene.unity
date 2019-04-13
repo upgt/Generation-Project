@@ -205,9 +205,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   depth: 200
-  plainDepth: 20
-  height: 256
-  width: 256
+  plainDepth: 80
+  height: 1024
+  width: 1024
   scale: 20
   offsetX: 100
   offsetY: 100
@@ -215,8 +215,8 @@ MonoBehaviour:
   mountainX: 100
   mountainY: 100
   angle: 30
-  flatCoefficient: 0.2
-  exponent: 0.5
+  flatCoefficient: 0.7
+  exponent: 4
   noiseCoefficients:
   - 1
   - 2
