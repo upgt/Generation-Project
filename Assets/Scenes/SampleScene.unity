@@ -298,12 +298,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c240287699adb4446be7cf0c757083d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depth: 6
-  height: 256
-  width: 256
-  scale: 20
+  depth: 113
+  height: 1024
+  width: 1024
+  scale: 5.32
   offsetX: 100
   offsetY: 100
+  flatCoefficient: 0.67
+  noiseCoefficients:
+  - 1
+  - 2.67
+  - 4.24
+  exponent: 5
   questZones: []
   casts: 3
   maxDist: 20
