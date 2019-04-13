@@ -206,19 +206,58 @@ public class TerrainGenerator : MonoBehaviour
         return prIndexCollection[rn.Next(prIndexCollection.Count)];
     }
 
+    List<List<float>> CreateNoise(int w, int h)
+    {
+        System.Random rn = new System.Random();
+        List<List<float>> heights = new List<List<float>>();
+
+        for (int x = 0; x < w; x++)
+        {
+            List<float> wei = new List<float>();
+            for (int y = 0; y < h; y++)
+            {
+                wei.Add(0.001f * rn.Next(0, 1000));
+            }
+            heights.Add(wei);
+        }
+        return heights;
+    }
+
+    void addCastTree(int castIndx, float[,] noise, List<List<float>> noise1)
+    {
+        System.Random rn = new System.Random();
+
+        for (int x = 0; x < width / minDist; x++)
+        {
+            for (int z = 0; z < height / minDist; z++)
+            {
+
+                if (noise1[x][z] >= minTreeScale)
+                {
+                    var xCoord = x * minDist;
+                    Vector2 coord = new Vector2(xCoord, z);
+                    var position = new Vector3((float)xCoord / width, heightMap[xCoord, z], (float)z * minDist / height);
+                    int prototypeIndex = checkParent(castIndx, coord, rn);
+                    var tree = new TreeInfo(position, prototypeIndex, noise1[x][z]);
+                    trees[castIndx].Add(tree);
+                }
+            }
+        }
+    }
+
     void addCastTree(int castIndx, System.Random rn)
     {
         var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
-        
-        int cTextureOnTerH = terrain.terrainData.alphamapHeight/height;
-        int cTextureOnTerW = terrain.terrainData.alphamapWidth/width;
+
+        int cTextureOnTerH = terrain.terrainData.alphamapHeight / height;
+        int cTextureOnTerW = terrain.terrainData.alphamapWidth / width;
         int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ
         float cTS = (maxTreeScale - minTreeScale) / castCount;
         float scale = (maxTreeScale - (castIndx * cTS)) * 1000;
         int maxTS = (int)scale;
         scale = (maxTreeScale - ((castIndx + 1) * cTS)) * 1000;
         int minTS = (int)scale;
-        
+
         for (int x = 0; x < width - minDist; x += rn.Next(minDist, maxDist) * castCount)
         {
             for (int z = 0; z < height; z += rn.Next(minDist, maxDist) * castCount)
@@ -227,25 +266,30 @@ public class TerrainGenerator : MonoBehaviour
                 int xNoise = Math.Abs(x + noiseX);
 
                 Vector2 coord = new Vector2(xNoise, z);
-                if (!isQZones(coord) && (alphaMaps[z*cTextureOnTerW, xNoise * cTextureOnTerH,iTextureGraund] < 1))
+                if (!isQZones(coord) && (alphaMaps[z * cTextureOnTerW, xNoise * cTextureOnTerH, iTextureGraund] < 1))
                 {
-                var position = new Vector3((float)xNoise / width, heightMap[xNoise, z], ((float)z) / height);
-                int prototypeIndex = checkParent(castIndx, coord,rn);
+                    var position = new Vector3((float)xNoise / width, heightMap[xNoise, z], ((float)z) / height);
+                    int prototypeIndex = checkParent(castIndx, coord, rn);
 
-                var tree = new TreeInfo(position, prototypeIndex, rn.Next(minTS, maxTS) * 0.001f);
-                trees[castIndx].Add(tree);
+                    var tree = new TreeInfo(position, prototypeIndex, rn.Next(minTS, maxTS) * 0.001f);
+                    trees[castIndx].Add(tree);
                 }
             }
         }
     }
 
+    /*0, 0.1 ,1*/
+
     void gTree(float xTer, float zTer)
     {
         gCasts();
+        float[,] noise = CreateHeights(width / minDist, height / minDist);
+        List<List<float>> whiteNoise = CreateNoise(width / minDist, height / minDist);
         for (int i = 0; i < castCount; i++)
         {
             System.Random rn = new System.Random();
-            addCastTree(i,rn);
+            addCastTree(i, noise, whiteNoise);
+            //addCastTree(i, rn);
             gTreesQuestZones(i);
         }
         DrawCastTree();
@@ -298,16 +342,23 @@ public class TerrainGenerator : MonoBehaviour
 
     float[,] CreateHeights()
     {
-        float[,] heights = new float[width, height];
-        for (int x = 0; x < width; x++)
+        return CreateHeights(width, height);
+    }
+
+    float[,] CreateHeights(int w, int h)
+    {
+        float[,] heights = new float[w, h];
+        for (int x = 0; x < w; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < h; y++)
             {
                 heights[x, y] = CalculateHeight(x, y);
             }
         }
         return heights;
     }
+
+
 
     float CalculateHeight(int x, int y)
     {
