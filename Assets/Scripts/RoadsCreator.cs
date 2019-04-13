@@ -68,29 +68,19 @@ public class RoadsCreator : MonoBehaviour
                     {
                         // X альфамапы = Z глобальных координат 
                         // Y альфамапы = X глобальных координат 
-
                         if (isCoord1X)
                         {
-                            for (int c2 = coord2 * 2; c2 < coord2 * 2 + 2; c2++) // разрешение меша 256, а разрешение альфа текстур 512, 
-                                                                                 // поэтому coord1 coord2 для высот, а с1 c2 для альфа текстур.
-                                for (int c1 = coord1 * 2; c1 < coord1 * 2 + 2; c1++)
-                                {
-                                    if (textureIndex == roadTextureIndex)
-                                        alphaMaps[c2, c1, textureIndex] = 1;
-                                    else alphaMaps[c2, c1, textureIndex] = 0;
-                                }
-                            //heightMap[coord2, coord1] -= roadLow; // тест, стереть строку 
+                            // разрешение меша 1024, а разрешение альфа текстур 512, 
+                            // поэтому берём координату высоты / 2
+                            if (textureIndex == roadTextureIndex)
+                                alphaMaps[coord2 / 2, coord1 / 2, textureIndex] = 1;
+                            else alphaMaps[coord2 / 2, coord1 / 2, textureIndex] = 0;
                         }
                         else
                         {
-                            for (int c2 = coord2 * 2; c2 < coord2 * 2 + 2; c2++)
-                                for (int c1 = coord1 * 2; c1 < coord1 * 2 + 2; c1++)
-                                {
-                                    if (textureIndex == roadTextureIndex)
-                                        alphaMaps[c1, c2, textureIndex] = 1;
-                                    else alphaMaps[c1, c2, textureIndex] = 0;
-                                }
-                            //heightMap[coord1, coord2] -= roadLow; // тест, стереть строку 
+                            if (textureIndex == roadTextureIndex)
+                                alphaMaps[coord1 / 2, coord2 / 2, textureIndex] = 1;
+                            else alphaMaps[coord1 / 2, coord2 / 2, textureIndex] = 0;
                         }
                     }
 

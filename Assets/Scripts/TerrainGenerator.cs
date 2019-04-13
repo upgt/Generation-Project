@@ -284,13 +284,17 @@ public class TerrainGenerator : MonoBehaviour
 
 
         // Конец зоны Goshana
+
+        // Misha zone start
+        gameObject.GetComponent<RoadsCreator>().enabled = true;
+        // Misha zone end
     }
     private void Update()
     {
         casts = castCount;
 
-        terrain = GetComponent<Terrain>(); // ЭТО ОБЯЗ В НАЧАЛЕ ПЛАНЕТЫ СУКА!!!!!!!!!!!!
-        terrain.terrainData = CreateTerrain(terrain.terrainData);
+        //terrain = GetComponent<Terrain>(); // ЭТО ОБЯЗ В НАЧАЛЕ ПЛАНЕТЫ СУКА!!!!!!!!!!!!
+        //terrain.terrainData = CreateTerrain(terrain.terrainData);
 
         //offsetX += Time.deltaTime * 2f;
     }
