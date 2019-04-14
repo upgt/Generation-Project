@@ -277,15 +277,21 @@ MonoBehaviour:
   roadTextureIndex: 1
   roadWidth: 5
   roadFlexure: 20
-  roadLow: 0.01
+  roadLow: 0.015
+  randomRoads: 1
   roads:
   - points:
     - x: 50
       z: 50
-    - x: 130
-      z: 100
-    - x: 210
+    - x: 400
       z: 150
+    - x: 200
+      z: 500
+  - points:
+    - x: 50
+      z: 550
+    - x: 950
+      z: 50
 --- !u!114 &1260465899
 MonoBehaviour:
   m_ObjectHideFlags: 0
