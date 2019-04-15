@@ -6,7 +6,7 @@ using Assets.Scripts;
 public class TerrainGenerator : MonoBehaviour
 {
     public int depth = 20;
-
+    public int plainDepth = 20;
     protected float[,] heightMap;
     public int height = 256;
     public int width = 256;
@@ -15,6 +15,11 @@ public class TerrainGenerator : MonoBehaviour
     public float offsetX = 100f;
     public float offsetY = 100f;
     private Terrain terrain;
+
+    public float flatCoefficient = 0.2f;    //сглаживание шума
+    public float[] noiseCoefficients;
+    public float exponent = 1f;
+    private float[,] heights;
 
     public List<List<TreeInfo>> Trees = new List<List<TreeInfo>>();
     public List<Vector3> QuestZones; // x = x; y = radius; z = z
@@ -199,6 +204,7 @@ public class TerrainGenerator : MonoBehaviour
     {
         TreeInfo.maxScale = MAX_TREE_SCALE;
         TreeInfo.minScale = minTreeScale;
+        
         terrain = GetComponent<Terrain>(); 
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
@@ -221,7 +227,7 @@ public class TerrainGenerator : MonoBehaviour
     TerrainData CreateTerrain(TerrainData terrainData)
     {
         terrainData.heightmapResolution = width + 1;
-        terrainData.size = new Vector3(width, depth, height);
+        terrainData.size = new Vector3(width, plainDepth, height);
         heightMap = CreateHeights();
         terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
         return terrainData;
@@ -256,11 +262,17 @@ public class TerrainGenerator : MonoBehaviour
     }
 
 
-    float CalculateHeight(int x, int y)
+    private float CalculateHeight(int x, int y)
     {
         float xCoord = (float)x / width * scale + offsetX;
         float yCoord = (float)y / height * scale + offsetY;
 
-        return Mathf.PerlinNoise(xCoord, yCoord);
+        var _height = (Mathf.PerlinNoise(noiseCoefficients[0] * xCoord, noiseCoefficients[0] * yCoord)
+             + 0.5f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)
+             + 0.25f * Mathf.PerlinNoise(noiseCoefficients[2] * xCoord, noiseCoefficients[2] * yCoord)) * flatCoefficient;
+
+        _height = (float)Math.Pow(_height, exponent);
+
+        return _height;
     }
 }
