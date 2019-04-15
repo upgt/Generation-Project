@@ -1,4 +1,4 @@
-﻿using Application;
+﻿using System;
 using UnityEngine;
 
 public class TerrainGenerator : MonoBehaviour
@@ -12,18 +12,20 @@ public class TerrainGenerator : MonoBehaviour
     public float offsetX = 100f;
     public float offsetY = 100f;
 
-    public int mountainHeight = 200;
-    public int mountainX = 100;
-    public int mountainY = 100;
-    public double angle = 30f;
+    //public int mountainHeight = 200;
+    //public int mountainX = 100;
+    //public int mountainY = 100;
+    //public double angle = 30f;
 
     public float flatCoefficient = 0.2f;    //сглаживание шума
+    public float[] noiseCoefficients;
+    public float exponent = 1f;
     private float[,] heights;
 
     private void Start()
     {
-        offsetX = Random.Range(0, 1000f);
-        offsetY = Random.Range(0, 1000f);
+        offsetX = UnityEngine.Random.Range(0, 1000f);
+        offsetY = UnityEngine.Random.Range(0, 1000f);
         Terrain terrain = GetComponent<Terrain>();
         terrain.terrainData = CreateTerrain(terrain.terrainData);
 
@@ -58,57 +60,52 @@ public class TerrainGenerator : MonoBehaviour
         return heights;
     }
 
-    private float[,] CreateHeightsRed()
-    {
-        var _heights = new float[width+1, height+1];
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                _heights[x, y] = Noise(x,y);
-            }
-        }
+    //private float[,] CreateHeightsRed()
+    //{
+    //    var _heights = new float[width+1, height+1];
+    //    for (int x = 0; x < width; x++)
+    //    {
+    //        for (int y = 0; y < height; y++)
+    //        {
+    //            _heights[x, y] = Noise(x,y);
+    //        }
+    //    }
        
-        return RedNoise(_heights);
-    }
+    //    return RedNoise(_heights);
+    //}
 
-    private float Noise(int x, int y)
-    {
-        return Mathf.Sin(x+y) + Mathf.Cos(x+y);
-    }
+    //private float Noise(int x, int y)
+    //{
+    //    return Mathf.Sin(x+y) + Mathf.Cos(x+y);
+    //}
 
-    private float[,] RedNoise(float[,] noise)
-    {
-        var _heights = new float[width, height];
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                _heights[i, j] = flatCoefficient * (noise[i, j] + noise[i, j + 1] + noise[i+1, j])/3;
-            }
-        }
-        return _heights;
-    }
+    //private float[,] RedNoise(float[,] noise)
+    //{
+    //    var _heights = new float[width, height];
+    //    for (int i = 0; i < width; i++)
+    //    {
+    //        for (int j = 0; j < height; j++)
+    //        {
+    //            _heights[i, j] = flatCoefficient * (noise[i, j] + noise[i, j + 1] + noise[i+1, j])/3;
+    //        }
+    //    }
+    //    return _heights;
+    //}
 
     private float CalculateHeight(int x, int y)
     {
         float xCoord = (float)x / width * scale + offsetX;
         float yCoord = (float)y / height * scale +  offsetY;
 
-        return Mathf.PerlinNoise(xCoord, yCoord) * flatCoefficient;
+        var _height = (Mathf.PerlinNoise(noiseCoefficients[0] * xCoord, noiseCoefficients[0] * yCoord)
+             + 0.5f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)
+             + 0.25f * Mathf.PerlinNoise(noiseCoefficients[2] * xCoord, noiseCoefficients[2] * yCoord)) * flatCoefficient;
+
+        _height = (float)Math.Pow(_height, exponent);
+
+        return _height;
     }
 
-    //private void AddMountain()
-    //{
-    //    Mountain mountain = new Mountain(mountainHeight, angle);
-    //    int halfWidth = mountain.BaseWidth / 2;
-    //    for (int i = 0; i < mountain.BaseWidth; i++)
-    //        for (int j = 0; j < mountain.BaseWidth; j++)
-    //        {
-    //            if (mountain.Heights[i,j] > 0)
-    //                heights[mountainX - halfWidth + i, mountainY - halfWidth + j] = mountain.Heights[i, j];
-    //        }
-    //}
 }
 
 
