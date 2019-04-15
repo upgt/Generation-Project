@@ -192,7 +192,6 @@ GameObject:
   - component: {fileID: 1260465897}
   - component: {fileID: 1260465896}
   - component: {fileID: 1260465895}
-  - component: {fileID: 1260465899}
   - component: {fileID: 1260465898}
   m_Layer: 0
   m_Name: Terrain
@@ -271,52 +270,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 1260465894}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d6b3ffda0e776a40b078df2bf9b7bc0, type: 3}
+  m_Script: {fileID: 11500000, guid: 3bf180aa2793048d48e1950e800039d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roadTextureIndex: 1
-  roadWidth: 5
-  roadFlexure: 20
-  roadLow: 0.1
-  roads:
-  - points:
-    - x: 50
-      z: 50
-    - x: 130
-      z: 100
-    - x: 210
-      z: 150
---- !u!114 &1260465899
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1260465894}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c240287699adb4446be7cf0c757083d2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  depth: 113
-  height: 1024
-  width: 1024
-  scale: 5.32
+  depth: 1
+  height: 256
+  width: 256
+  scale: 20
   offsetX: 100
   offsetY: 100
-  flatCoefficient: 0.67
-  noiseCoefficients:
-  - 1
-  - 2.67
-  - 4.24
-  exponent: 5
-  questZones: []
-  casts: 3
-  maxDist: 20
-  minDist: 5
-  maxTreeScale: 1
-  minTreeScale: 0.45
-  ind: 0
+  QuestZones: []
+  Casts: 2
+  maxDist: 21
+  minDist: 15
+  minTreeScale: 0.4
 --- !u!1 &2052337409
 GameObject:
   m_ObjectHideFlags: 0
