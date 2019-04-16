@@ -6,7 +6,7 @@ using Assets.Scripts;
 public class TerrainGenerator : MonoBehaviour
 {
     public int depth = 20;
-    public int plainDepth = 20;
+    //public int plainDepth = 20;
     protected float[,] heightMap;
     public int height = 256;
     public int width = 256;
@@ -222,12 +222,13 @@ public class TerrainGenerator : MonoBehaviour
     private void Update()
     {
         Casts = castCount;
+        terrain.terrainData = CreateTerrain(terrain.terrainData);
     }
 
     TerrainData CreateTerrain(TerrainData terrainData)
     {
         terrainData.heightmapResolution = width + 1;
-        terrainData.size = new Vector3(width, plainDepth, height);
+        terrainData.size = new Vector3(width, depth, height);
         heightMap = CreateHeights();
         terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
         return terrainData;
