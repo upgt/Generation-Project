@@ -20,8 +20,10 @@ public class RoadsCreator : MonoBehaviour
     public int roadTextureIndex; //индекс текстуры дороги в инспекторе (отсчёт с нуля слева направо) 
     public int roadWidth = 5; //ширина дороги/2 
     public int roadFlexure = 20; //кривизна дороги 
-    public float roadLow = 0.04f; //понижение дороги 
+    public float roadLow = 0.015f; //понижение дороги 
     public bool randomRoads = false; //создание случайных дорог вместо определенных
+    public bool tracks = true; //колеи дорог
+    private float tracksLow = 0.007f;
     public Road[] roads;
     
     public void MakeRoads(Road[] roads)
@@ -130,20 +132,24 @@ public class RoadsCreator : MonoBehaviour
                         }
 
                         // сглаживание рельефа дороги 
-                        float mediumRoadHeight = 0;
-                        int n = 0;
-                        for (int j = coord1 - roadWidth * 2; j < coord1 + roadWidth * 2; j++)
-                            for (int k = coord2 - roadWidth * 2; k < coord2 + roadWidth * 2; k++)
-                            {
-                                mediumRoadHeight += (isCoord1X ? 
-                                    defaultHeightMap[k, j] :
-                                    defaultHeightMap[j, k]);
-                                n++;
-                            }
-                        mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
-                        if (isCoord1X)
-                            heightMap[coord2, coord1] = mediumRoadHeight;
-                        else heightMap[coord1, coord2] = mediumRoadHeight;
+                        {
+                            float mediumRoadHeight = 0;
+                            int n = 0;
+                            for (int j = coord1 - roadWidth * 2; j < coord1 + roadWidth * 2; j++)
+                                for (int k = coord2 - roadWidth * 2; k < coord2 + roadWidth * 2; k++)
+                                {
+                                    mediumRoadHeight += (isCoord1X ?
+                                        defaultHeightMap[k, j] :
+                                        defaultHeightMap[j, k]);
+                                    n++;
+                                }
+                            mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
+                            if (tracks)
+                                mediumRoadHeight -= tracksLow *(1 - Mathf.Abs(Mathf.Cos(Mathf.PI * b / roadWidth))); //снижение - колеи дорог
+                            if (isCoord1X)
+                                heightMap[coord2, coord1] = mediumRoadHeight;
+                            else heightMap[coord1, coord2] = mediumRoadHeight;
+                        }
                     }
 
                     // сглаживание рельефа вокруг дороги (ниже) 
@@ -234,9 +240,9 @@ public class RoadsCreator : MonoBehaviour
         for (var x = 0; x < alphamapWidth; x++)
             for (var y = 0; y < alphamapHeight; y++)
                 for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++)
-                    if (textureIndex == roadTextureIndex)
-                        alphaMaps[x, y, textureIndex] = 0;
-                    else alphaMaps[x, y, textureIndex] = 1f / (texturesCount - 1);
+                    if (textureIndex == 0)
+                        alphaMaps[x, y, textureIndex] = 1f; //закрашиваем всю карту нулевой текстурой (травой)
+                    else alphaMaps[x, y, textureIndex] = 0f;
     }
 
     // Start is called before the first frame update 
