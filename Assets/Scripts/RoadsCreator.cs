@@ -23,7 +23,7 @@ public class RoadsCreator : MonoBehaviour
     public float roadLow = 0.015f; //понижение дороги 
     public bool randomRoads = false; //создание случайных дорог вместо определенных
     public bool tracks = true; //колеи дорог
-    private float tracksLow = 0.007f;
+    private float tracksLow = 0.0055f;
     public Road[] roads;
     
     public void MakeRoads(Road[] roads)
@@ -70,7 +70,7 @@ public class RoadsCreator : MonoBehaviour
                 for (int a = 0; a <= delta1; a++)
                 {
                     int coord1; // первая координата точки на отрезке между point i и point i+1
-                    int currentCoord2; // вторая координата точки учитывая отклонение
+                    float currentCoord2; // вторая координата точки учитывая отклонение
                     bool isCoord1X; // если true, то min1 = minX, delta1 = deltaX и т.д.. Если false, то min1 = minY и т.д.
 
                     // рассчёты трёх предыдущих переменных:
@@ -88,8 +88,8 @@ public class RoadsCreator : MonoBehaviour
                         {
                             isCoord1X = true;
                             coord1 = a + minX;
-                            int deltaCoord2 = (int)(deltaZ * ((float)(coord1 - minX) / deltaX)); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
-                            int flexure = (int)(Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minX) / deltaX)) * roadFlexure); // отклонение (изгиб) дороги по синусоиде
+                            float deltaCoord2 = deltaZ * ((float)(coord1 - minX) / deltaX); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
+                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minX) / deltaX)) * roadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
                             minZ + deltaCoord2 + flexure :
                             maxZ - deltaCoord2 - flexure;
@@ -98,8 +98,8 @@ public class RoadsCreator : MonoBehaviour
                         {
                             isCoord1X = false;
                             coord1 = a + minZ;
-                            int deltaCoord2 = (int)(deltaX * ((float)(coord1 - minZ) / deltaZ)); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
-                            int flexure = (int)(Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minZ) / deltaZ)) * roadFlexure); // отклонение (изгиб) дороги по синусоиде
+                            float deltaCoord2 = deltaX * ((float)(coord1 - minZ) / deltaZ); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
+                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minZ) / deltaZ)) * roadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
                             minX + deltaCoord2 + flexure :
                             maxX - deltaCoord2 - flexure;
@@ -109,7 +109,7 @@ public class RoadsCreator : MonoBehaviour
 
                     for (int b = -roadWidth; b < roadWidth; b++)
                     {
-                        int coord2 = b + currentCoord2;
+                        int coord2 = b + (int)currentCoord2;
                         // отрисовка дороги 
                         for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++) // цикл по текстурам точки 
                         {
@@ -144,8 +144,8 @@ public class RoadsCreator : MonoBehaviour
                                     n++;
                                 }
                             mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
-                            if (tracks)
-                                mediumRoadHeight -= tracksLow *(1 - Mathf.Abs(Mathf.Cos(Mathf.PI * b / roadWidth))); //снижение - колеи дорог
+                            if (tracks) //если дороги с колеями
+                                mediumRoadHeight -= tracksLow *(1 - Mathf.Abs(Mathf.Cos((Mathf.PI * b + currentCoord2 - (int)currentCoord2)/ roadWidth))); //снижение - колеи дорог
                             if (isCoord1X)
                                 heightMap[coord2, coord1] = mediumRoadHeight;
                             else heightMap[coord1, coord2] = mediumRoadHeight;
@@ -155,7 +155,8 @@ public class RoadsCreator : MonoBehaviour
                     // сглаживание рельефа вокруг дороги (ниже) 
                     for (int c = 0; c < roadWidth; c++)
                     {
-                        int coord2 = currentCoord2 - roadWidth * 2 + c;
+                        int coord2 = (int)currentCoord2 - roadWidth * 2 + c;
+                        float coord2f = currentCoord2 - roadWidth * 2 + c; //значение float для исправления ребристости дороги
                         float mediumRoadHeight = 0;
                         int n = 0;
                         for (int j = coord1 - roadWidth * 2; j < coord1 + roadWidth * 2; j++)
@@ -168,7 +169,7 @@ public class RoadsCreator : MonoBehaviour
                             }
                         mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
                         float deltaHeight; // разница по высоте между дорогой и оригинальной землёй
-                        float coef = (1 + Mathf.Cos(Mathf.PI * (coord2 - (currentCoord2 - roadWidth * 2)) / roadWidth) * -1) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
+                        float coef = (1 + Mathf.Cos(Mathf.PI * (coord2f - (currentCoord2 - roadWidth * 2)) / roadWidth) * -1) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
 
                         if (isCoord1X)
                         {
@@ -185,7 +186,8 @@ public class RoadsCreator : MonoBehaviour
                     // сглаживание рельефа вокруг дороги (выше) 
                     for (int d = 0; d < roadWidth; d++)
                     {
-                        int coord2 = currentCoord2 + roadWidth + d;
+                        int coord2 = (int)currentCoord2 + roadWidth + d;
+                        float coord2f = currentCoord2 + roadWidth + d;
                         float mediumRoadHeight = 0;
                         int n = 0;
                         for (int j = coord1 - roadWidth * 2; j < coord1 + roadWidth * 2; j++)
@@ -198,7 +200,7 @@ public class RoadsCreator : MonoBehaviour
                             }
                         mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
                         float deltaHeight; // разница по высоте между дорогой и оригинальной землёй
-                        float coef = (1 + Mathf.Cos(Mathf.PI * (coord2 - (currentCoord2 + roadWidth)) / roadWidth)) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
+                        float coef = (1 + Mathf.Cos(Mathf.PI * (coord2f - (currentCoord2 + roadWidth)) / roadWidth)) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
 
                         if (isCoord1X)
                         {
