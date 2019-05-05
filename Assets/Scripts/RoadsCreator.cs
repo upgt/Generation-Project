@@ -25,6 +25,7 @@ public class RoadsCreator : MonoBehaviour
     public bool tracks = true; //колеи дорог
     private float tracksLow = 0.0055f;
     public Road[] roads;
+    public float[,] treePlaceInfo; //информация о возможности рассадки деревьев, 0 - нельзя
     
     public void MakeRoads(Road[] roads)
     {
@@ -32,6 +33,11 @@ public class RoadsCreator : MonoBehaviour
         var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
         var heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         var texturesCount = terrainData.splatPrototypes.Length;
+
+        treePlaceInfo = (float[,])heightMap.Clone();
+        for (int j = 0; j < terrainData.alphamapWidth; j++)
+            for (int k = 0; k < terrainData.heightmapWidth; k++)
+                treePlaceInfo[j, k] = 1;
 
         CleanAlphaMaps(alphaMaps, terrainData.alphamapWidth, terrainData.alphamapHeight, texturesCount);
 
@@ -147,8 +153,15 @@ public class RoadsCreator : MonoBehaviour
                             if (tracks) //если дороги с колеями
                                 mediumRoadHeight -= tracksLow *(1 - Mathf.Abs(Mathf.Cos((Mathf.PI * b + currentCoord2 - (int)currentCoord2)/ roadWidth))); //снижение - колеи дорог
                             if (isCoord1X)
+                            {
                                 heightMap[coord2, coord1] = mediumRoadHeight;
-                            else heightMap[coord1, coord2] = mediumRoadHeight;
+                                treePlaceInfo[coord2, coord1] = 0;
+                            }
+                            else
+                            {
+                                heightMap[coord1, coord2] = mediumRoadHeight;
+                                treePlaceInfo[coord1, coord2] = 0;
+                            }
                         }
                     }
 
@@ -175,11 +188,13 @@ public class RoadsCreator : MonoBehaviour
                         {
                             deltaHeight = mediumRoadHeight - defaultHeightMap[coord2, coord1];
                             heightMap[coord2, coord1] = defaultHeightMap[coord2, coord1] + deltaHeight * coef;
+                            treePlaceInfo[coord2, coord1] = 0;
                         }
                         else
                         {
                             deltaHeight = mediumRoadHeight - defaultHeightMap[coord1, coord2];
                             heightMap[coord1, coord2] = defaultHeightMap[coord1, coord2] + deltaHeight * coef;
+                            treePlaceInfo[coord1, coord2] = 0;
                         }
                     }
 
@@ -206,12 +221,33 @@ public class RoadsCreator : MonoBehaviour
                         {
                             deltaHeight = mediumRoadHeight - defaultHeightMap[coord2, coord1];
                             heightMap[coord2, coord1] = defaultHeightMap[coord2, coord1] + deltaHeight * coef;
+                            treePlaceInfo[coord2, coord1] = 0;
                         }
                         else
                         {
                             deltaHeight = mediumRoadHeight - defaultHeightMap[coord1, coord2];
                             heightMap[coord1, coord2] = defaultHeightMap[coord1, coord2] + deltaHeight * coef;
+                            treePlaceInfo[coord1, coord2] = 0;
                         }
+                    }
+
+                    // заполнение инфы treePlaceInfo о промежуточных значениях (снизу)
+                    for (int c = 0; c < roadWidth; c++)
+                    {
+                        int coord2 = (int)currentCoord2 - roadWidth * 3 + c;
+                        if (isCoord1X)
+                            treePlaceInfo[coord2, coord1] = 0.5f;
+                        else
+                            treePlaceInfo[coord1, coord2] = 0.5f;
+                    }
+                    // сверху
+                    for (int d = 0; d < roadWidth; d++)
+                    {
+                        int coord2 = (int)currentCoord2 + roadWidth * 2 + d;
+                        if (isCoord1X)
+                            treePlaceInfo[coord2, coord1] = 0.5f;
+                        else
+                            treePlaceInfo[coord1, coord2] = 0.5f;
                     }
                 }
             }
