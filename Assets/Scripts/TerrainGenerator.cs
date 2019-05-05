@@ -3,19 +3,13 @@ using UnityEngine;
 using System.Collections.Generic;
 using Assets.Scripts;
 
-public  class Generator : MonoBehaviour
+public abstract class Generator : MonoBehaviour
 {
     public virtual Terrain Terrain { get; set; }
 
-    public virtual float[,] CreateHeights(int w, int h, Calculated calculate)
-    {
-        throw new Exception("empty method");
-    }
+    public abstract float[,] CreateHeights(int w, int h, Calculated calculate);
 
-    public virtual float CalculateHeight(int x, int y)
-    {
-        throw new Exception("empty method");
-    }
+    public abstract float CalculateHeight(int x, int y);
 }
 public class TerrainGenerator : Generator
 {
