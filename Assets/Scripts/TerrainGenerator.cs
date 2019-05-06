@@ -22,17 +22,22 @@ public class TerrainGenerator : Generator
     public int depth = 20;
     //public int plainDepth = 20;
     public float[,] heightMap;
-    public int height = 256;
     public int width = 256;
+    public int height = 256;
+    public int grain = 8; // Коэффициент зернистости
+    public float r;
 
-    public float scale = 20f;
-    public float offsetX = 100f;
-    public float offsetY = 100f;
+    private Color32[] cols;
+    private Texture2D texture;
 
-    public float flatCoefficient = 0.2f;    //сглаживание шума
-    public float[] noiseCoefficients;
-    public float exponent = 1f;
-    private float[,] heights;
+    //public float scale = 20f;
+    //public float offsetX = 100f;
+    //public float offsetY = 100f;
+
+    //public float flatCoefficient = 0.2f;    //сглаживание шума
+    //public float[] noiseCoefficients;
+    //public float exponent = 1f;
+    //private float[,] heights;
 
     private float xTerrain = 0;
     private float zTerrain = 0;
@@ -47,28 +52,56 @@ public class TerrainGenerator : Generator
 
         Terrain = GetComponent<Terrain>();
 
-        offsetX = UnityEngine.Random.Range(0, 1000f);
-        offsetY = UnityEngine.Random.Range(0, 1000f);
+        //offsetX = UnityEngine.Random.Range(0, 1000f);
+        //offsetY = UnityEngine.Random.Range(0, 1000f);
 
         Terrain.terrainData = CreateTerrain(Terrain.terrainData);
 
         // Работает только тогда когда в массиве деревьев есть хотя бы одно деревоVector3 position = new Vector3(xTerrain, 0, zTerrain);                     
         if (Terrain.terrainData.treePrototypes.Length > 0)
         {
-            Vector3 positionEnd = new Vector3(width + xTerrain, 0, height + zTerrain);
+            Vector3 positionEnd = new Vector3(width + xTerrain, 0, width + zTerrain);
         }
     }
-    private void Update()
-    {
-        Terrain.terrainData = CreateTerrain(Terrain.terrainData);
-    }
+
+    //private void Update()
+    //{
+    //    Terrain.terrainData = CreateTerrain(Terrain.terrainData);
+    //}
 
     TerrainData CreateTerrain(TerrainData terrainData)
     {
-        terrainData.heightmapResolution = width + 1;
-        terrainData.size = new Vector3(width, depth, height);
-        heightMap = CreateHeights();
-        terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
+        int resolution = width;
+        //terrainData.heightmapResolution = size + 1;
+        //terrainData.size = new Vector3(size, depth, size);
+        //heightMap = CreateHeights();
+        //terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
+
+        // Задаём карту высот
+        float[,] heights = new float[resolution, resolution];
+
+        DiamondSquare diamondSquare = new DiamondSquare(width, height, grain, r);
+        // Создаём карту высот
+        texture = new Texture2D(width, height);
+        cols = new Color32[width * height];
+        cols = diamondSquare.DrawPlasma(width, height);
+        texture.SetPixels32(cols);
+        texture.Apply();
+
+        // Задаём высоту вершинам по карте высот
+        for (int i = 0; i < resolution; i++)
+        {
+            for (int k = 0; k < resolution; k++)
+            {
+                heights[i, k] = texture.GetPixel(i, k).grayscale * r;
+            }
+        }
+
+        // Применяем изменения
+        terrainData.size = new Vector3(width, width, height);
+        terrainData.heightmapResolution = resolution;
+        terrainData.SetHeights(0, 0, heights);
+
         return terrainData;
     }
 
@@ -84,30 +117,30 @@ public class TerrainGenerator : Generator
 
 
 
-    public override float CalculateHeight(int x, int y)
-    {
-        float xCoord = (float)x / width * scale + offsetX;
-        float yCoord = (float)y / height * scale + offsetY;
+    //public override float CalculateHeight(int x, int y)
+    //{
+    //    float xCoord = (float)x / width * scale + offsetX;
+    //    float yCoord = (float)y / height * scale + offsetY;
 
-        var _height = (Mathf.PerlinNoise(noiseCoefficients[0] * xCoord, noiseCoefficients[0] * yCoord)
-             + 0.5f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)
-             + 0.25f * Mathf.PerlinNoise(noiseCoefficients[2] * xCoord, noiseCoefficients[2] * yCoord)) * flatCoefficient;
+    //    var _height = (Mathf.PerlinNoise(noiseCoefficients[0] * xCoord, noiseCoefficients[0] * yCoord)
+    //         + 0.5f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)
+    //         + 0.25f * Mathf.PerlinNoise(noiseCoefficients[2] * xCoord, noiseCoefficients[2] * yCoord)) * flatCoefficient;
 
-        _height = (float)Math.Pow(_height, exponent);
+    //    _height = (float)Math.Pow(_height, exponent);
 
-        return _height;
-    }
+    //    return _height;
+    //}
 
-    public override float[,] CreateHeights(int w, int h, Calculated calculate)
-    {
-        float[,] heights = new float[w, h];
-        for (int x = 0; x < w; x++)
-        {
-            for (int y = 0; y < h; y++)
-            {
-                heights[x, y] = calculate.Invoke(x, y);
-            }
-        }
-        return heights;
-    }
+    //public override float[,] CreateHeights(int w, int h, Calculated calculate)
+    //{
+    //    float[,] heights = new float[w, h];
+    //    for (int x = 0; x < w; x++)
+    //    {
+    //        for (int y = 0; y < h; y++)
+    //        {
+    //            heights[x, y] = calculate.Invoke(x, y);
+    //        }
+    //    }
+    //    return heights;
+    //}
 }
