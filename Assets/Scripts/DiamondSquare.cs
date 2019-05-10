@@ -1,77 +1,80 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-//public class Square
-//{
-//    public float c1;
-//    public float c2;
-//    public float c3;
-//    public float c4;
-
-//    public Square()
-//    {
-//        c1 = Random.value;
-//        c2 = Random.value;
-//        c3 = Random.value;
-//        c4 = Random.value;
-//    }
-
-//    public Square(float a, float b, float c, float d)
-//    {
-//        c1 = a;
-//        c2 = b; 
-//        c3 = c; 
-//        c4 = d;
-//    }
-
-//    public float AverageValue()
-//    {
-//        return (c1 + c2 + c3 + c4) * 0.25f;
-//    }
-//}
-
-public class DiamondSquare : MonoBehaviour
+public class DiamondSquare
 {
     private float R; // Коэффициент скалистости
-    private int GRAIN = 8; // Коэффициент зернистости
-    private bool FLAT = false; // Делать ли равнины
+    private float GRAIN = 8; // Коэффициент зернистости
+    private bool Mountain; // Делать ли гору
 
-    private int width = 2048;
-    private int height = 2048;
     private float WH;
-    private Color32[] cols;
+    private float[,] heights;
 
+    private static readonly float minWHM = 100 / 0.2f;
+    private static readonly float maxWHM = 100 / 0.5f;
+    private float dispMin;
+    private float dispMax;
 
-    public DiamondSquare(int width, int height, int grain, float r)
+    public DiamondSquare(int width, int height, float grain, float r, bool mountain)
     {
         R = r;
         GRAIN = grain;
-        this.width = width;
-        this.height = height;
         WH = (float)width + height;
-        cols = new Color32[width * height];
+        heights = new float[width, height];
+        Mountain = mountain;
+
+        dispMin = width / minWHM;
+        dispMax = width / maxWHM;
     }
 
-
+    // Считаем рандомный коэффициент смещения для высоты
+    float DisplaceField(float num)
+    {
+        float max = num / WH * GRAIN * 0.25f;
+        return UnityEngine.Random.Range(-0.5f, 0.5f) * max;
+    }
     // Считаем рандомный коэффициент смещения для высоты
     float Displace(float num)
     {
         float max = num / WH * GRAIN;
-        return Random.Range(-0.5f, 0.5f) * max;
+        return UnityEngine.Random.Range(-0.5f, 0.5f) * max;
+    }
+    // Считаем рандомный коэффициент смещения для высоты
+    float DisplaceMountain(float num)
+    {
+        float max = num / WH * GRAIN;
+        return UnityEngine.Random.Range(dispMin, dispMax) * max;
     }
 
     // Вызов функции отрисовки с параметрами
-    public Color32[] DrawPlasma(float w, float h)
+    public float[,] DrawPlasma(float w, float h)
     {
-        float c1 = Random.value;
-        float c2 = Random.value;
-        float c3 = Random.value;
-        float c4 = Random.value;
+        float c1 = UnityEngine.Random.Range(0.2f, 0.25f);
+        float c2 = UnityEngine.Random.Range(0.2f, 0.25f);
+        float c3 = UnityEngine.Random.Range(0.2f, 0.25f);
+        float c4 = UnityEngine.Random.Range(0.2f, 0.25f);
 
         Divide(0.0f, 0.0f, w, h, c1, c2, c3, c4);
 
-        return cols;
+        return heights;
+    }
+
+    // Вызов функции отрисовки с параметрами
+    public float[,] DrawPlasma(float c1, float c2, float c3, float c4, float w, float h)
+    {
+        float _c1 = c1;
+        float _c2 = c2;
+        float _c3 = c3;
+        float _c4 = c4;
+
+        if (!Mountain)
+            Divide(0.0f, 0.0f, w, h, _c1, _c2, _c3, _c4);
+        else 
+            DivideMountain(0.0f, 0.0f, w, h, _c1, _c2, _c3, _c4);
+
+        return heights;
     }
 
     // Сама рекурсивная функция отрисовки
@@ -84,7 +87,57 @@ public class DiamondSquare : MonoBehaviour
         if (w < 1.0f && h < 1.0f)
         {
             float c = (c1 + c2 + c3 + c4) * 0.25f;
-            cols[(int)x + (int)y * width] = new Color(c, c, c);
+            heights[(int)x, (int)y] = c * R;
+        }
+        else
+        {
+            float middle = (c1 + c2 + c3 + c4) * 0.25f + DisplaceField(newWidth + newHeight);
+            float edge1 = (c1 + c2) * 0.5f;
+            float edge2 = (c2 + c3) * 0.5f;
+            float edge3 = (c3 + c4) * 0.5f;
+            float edge4 = (c4 + c1) * 0.5f;
+
+            Divide(x, y, newWidth, newHeight, c1, edge1, middle, edge4);
+            Divide(x + newWidth, y, newWidth, newHeight, edge1, c2, edge2, middle);
+            Divide(x + newWidth, y + newHeight, newWidth, newHeight, middle, edge2, c3, edge3);
+            Divide(x, y + newHeight, newWidth, newHeight, edge4, middle, edge3, c4);
+        }
+    }
+    void DivideMountain(float x, float y, float w, float h, float c1, float c2, float c3, float c4)
+    {
+
+        float newWidth = w * 0.5f;
+        float newHeight = h * 0.5f;
+
+        if (w < 1.0f && h < 1.0f)
+        {
+            float c = (c1 + c2 + c3 + c4) * 0.25f;
+            heights[(int)x, (int)y] = c * R;
+        }
+        else
+        {
+            float middle = (c1 + c2 + c3 + c4) * 0.25f + DisplaceMountain(newWidth + newHeight);
+            float edge1 = (c1 + c2) * 0.5f;
+            float edge2 = (c2 + c3) * 0.5f;
+            float edge3 = (c3 + c4) * 0.5f;
+            float edge4 = (c4 + c1) * 0.5f;
+
+            DivideMountain2(x, y, newWidth, newHeight, c1, edge1, middle, edge4);
+            DivideMountain2(x + newWidth, y, newWidth, newHeight, edge1, c2, edge2, middle);
+            DivideMountain2(x + newWidth, y + newHeight, newWidth, newHeight, middle, edge2, c3, edge3);
+            DivideMountain2(x, y + newHeight, newWidth, newHeight, edge4, middle, edge3, c4);
+        }
+    }
+    void DivideMountain2(float x, float y, float w, float h, float c1, float c2, float c3, float c4)
+    {
+
+        float newWidth = w * 0.5f;
+        float newHeight = h * 0.5f;
+
+        if (w < 1.0f && h < 1.0f)
+        {
+            float c = (c1 + c2 + c3 + c4) * 0.25f;
+            heights[(int)x, (int)y] = c * R;
         }
         else
         {
@@ -94,21 +147,10 @@ public class DiamondSquare : MonoBehaviour
             float edge3 = (c3 + c4) * 0.5f;
             float edge4 = (c4 + c1) * 0.5f;
 
-            if (!FLAT)
-            {
-                if (middle <= 0)
-                {
-                    middle = 0;
-                }
-                else if (middle > 1.0f)
-                {
-                    middle = 1.0f;
-                }
-            }
-            Divide(x, y, newWidth, newHeight, c1, edge1, middle, edge4);
-            Divide(x + newWidth, y, newWidth, newHeight, edge1, c2, edge2, middle);
-            Divide(x + newWidth, y + newHeight, newWidth, newHeight, middle, edge2, c3, edge3);
-            Divide(x, y + newHeight, newWidth, newHeight, edge4, middle, edge3, c4);
+            DivideMountain2(x, y, newWidth, newHeight, c1, edge1, middle, edge4);
+            DivideMountain2(x + newWidth, y, newWidth, newHeight, edge1, c2, edge2, middle);
+            DivideMountain2(x + newWidth, y + newHeight, newWidth, newHeight, middle, edge2, c3, edge3);
+            DivideMountain2(x, y + newHeight, newWidth, newHeight, edge4, middle, edge3, c4);
         }
     }
 }
