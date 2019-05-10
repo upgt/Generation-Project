@@ -204,11 +204,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bf180aa2793048d48e1950e800039d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depth: 20
+  depth: 256
   width: 256
   height: 256
-  grain: 4
+  grain: 6.34
   r: 0.3
+  mountainsX: bf000000
+  mountainsY: 9b000000
+  mountainsW: 64000000
 --- !u!1 &1085761149
 GameObject:
   m_ObjectHideFlags: 0
