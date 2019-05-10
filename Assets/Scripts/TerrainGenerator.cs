@@ -13,6 +13,15 @@ public abstract class Generator : MonoBehaviour
 }
 public class TerrainGenerator : Generator
 {
+    // секс переменные
+    private System.Random rn;
+    private List<float> maskCollect;
+    private int smothAngle = 6;
+    public float[,] maskWMap;
+    float[,] globalMaskMap;
+    // секс закончился
+
+
     public int depth = 20;
     //public int plainDepth = 20;
     public float[,] heightMap;
@@ -30,15 +39,15 @@ public class TerrainGenerator : Generator
 
     private float xTerrain = 0;
     private float zTerrain = 0;
-   
-    public static implicit operator float[,](TerrainGenerator t)
+
+    public static implicit operator float[,] (TerrainGenerator t)
     {
         return t.heightMap;
     }
 
     private void Start()
     {
-
+        rn = new System.Random();
         Terrain = GetComponent<Terrain>();
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
@@ -52,21 +61,244 @@ public class TerrainGenerator : Generator
             Vector3 positionEnd = new Vector3(width + xTerrain, 0, height + zTerrain);
         }
     }
-    private void Update()
+
+
+    //функции секса
+    private float GetMaxParam(float[,] mask)
     {
-        Terrain.terrainData = CreateTerrain(Terrain.terrainData);
+        float result = 0;
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                result = Mathf.Max(mask[i, j], result);
+            }
+        }
+        return result;
     }
+
+    private float GetMinParam(float[,] mask)
+    {
+        float result = 1;
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                result = Mathf.Min(mask[i, j], result);
+            }
+        }
+        return result;
+    }
+
+    private float[,] InterpolatedMask(float[,] mask)
+    {
+        float[,] maskTerrain = new float[width, height];
+        float minParam = GetMinParam(mask);
+        float maxParam = GetMaxParam(mask) - minParam;
+        float param;
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                param = (mask[i, j] - minParam) / maxParam;
+                maskTerrain[i, j] = (float)Math.Round(param, 1);
+                if (maskTerrain[i, j] * 10 % 3 != 0)
+                {
+                    param = (maskTerrain[i, j] * 10 % 3) * 0.1f;
+                    maskTerrain[i, j] = maskTerrain[i, j] - param;
+                }
+            }
+        }
+        return maskTerrain;
+    }
+
+    float[,] waterMask;
+    float[,] createWaterMask(float[,] mask, float waterParam)
+    {
+        waterMask = new float[width, height];
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                if (mask[i, j] == waterParam)
+                {
+                    waterMask[i, j] = 0;
+                }
+                else
+                {
+                    waterMask[i, j] = 1;
+                }
+            }
+        }
+        return waterMask;
+    }
+
+    private float gbs = 1;
+    float[,] smoothWaterZone(float[,] mask, float param)
+    {
+        float radSmoothAngle = (param + smothAngle) * Mathf.PI / 180;
+        float angle = 0;
+        float smoothCoef;
+        angle = Mathf.Acos(gbs);
+        angle += radSmoothAngle;
+        smoothCoef = (Mathf.Cos(angle) + 1) / 2;
+
+        if (param == 0)
+        {
+            gbs = 1;
+        }
+
+        for (int i = 1; i < width - 1; i++)
+        {
+            for (int j = 1; j < height - 1; j++)
+            {
+                if (mask[i, j] == gbs)
+                {
+                    if (mask[i + 1, j] == 0)
+                    {
+                        mask[i + 1, j] = smoothCoef;
+                    }
+                    if (mask[i, j + 1] == 0)
+                    {
+                        mask[i, j + 1] = smoothCoef;
+                    }
+                    if (mask[i - 1, j] == 0)
+                    {
+                        mask[i - 1, j] = smoothCoef;
+                    }
+                    if (mask[i, j - 1] == 0)
+                    {
+                        mask[i, j - 1] = smoothCoef;
+                    }
+                }
+            }
+        }
+        gbs = smoothCoef;
+        return mask;
+    }
+
+    float[,] MergerMask(float[,] map, float[,] mask, float param, int det = 1)
+    {
+        float[,] result = map;
+        for (int i = 1; i < width - 1; i++)
+        {
+            for (int j = 1; j < height - 1; j++)
+            {
+                if (mask[i, j] != det)
+                {
+                    result[i, j] = mask[i, j] * param;
+                }
+            }
+        }
+        return result;
+    }
+
+    bool IsUnique(float param, List<float> list)
+    {
+        bool result = true;
+        for(int i = 0; i < list.Count; i++)
+        {
+            if(list[i] == param)
+            {
+                result = false;
+            }
+        }
+        return result;
+    }
+
+    List<float> levelMap;
+    void LevelMap(float[,] map)
+    {
+        levelMap = new List<float>();
+        for (int i = 1; i < width - 1; i++)
+        {
+            for (int j = 1; j < height - 1; j++)
+            {
+                if(IsUnique(map[i,j], levelMap))
+                {
+                    levelMap.Add(map[i, j]);
+                }
+            }
+        }
+        levelMap.Sort();
+    }
+    // функции секса умерли
 
     TerrainData CreateTerrain(TerrainData terrainData)
     {
+        // зона секса
+        TerrainGenerator example = new TerrainGenerator();
+        example.depth = depth;
+        example.scale = scale;
+        example.noiseCoefficients = noiseCoefficients;
+        example.flatCoefficient = flatCoefficient;
+
+        depth = 20;
+        scale = 2;
+        offsetX = rn.Next(0, 10000);
+        offsetY = rn.Next(0, 10000);
+        flatCoefficient = 0.03f;
+        noiseCoefficients = new float[3];
+        noiseCoefficients[0] = 1;
+        noiseCoefficients[1] = 0;
+        noiseCoefficients[2] = 0;
+        exponent = 3.3f;
+        terrainData.heightmapResolution = width + 1;
+        terrainData.size = new Vector3(width, depth, height);
+        globalMaskMap = CreateHeights();
+        globalMaskMap = InterpolatedMask(globalMaskMap); // убойная хуйня так-же пригодиться для наложения текстур!
+        LevelMap(globalMaskMap);
+        maskWMap = createWaterMask(globalMaskMap, levelMap[0]);
+        for (int i = 0; i < 90 / smothAngle; i++)
+        {
+            maskWMap = smoothWaterZone(maskWMap, i * smothAngle);
+        }
+        globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1]);
+
+        // делаем землю
+        maskWMap = createWaterMask(globalMaskMap, levelMap[1]);
+
+        depth = 20;
+        scale = 4;
+        offsetX = rn.Next(0, 10000);
+        offsetY = rn.Next(0, 10000);
+        flatCoefficient = 0.7f;
+        noiseCoefficients = new float[3];
+        noiseCoefficients[0] = 1;
+        noiseCoefficients[1] = 2;
+        noiseCoefficients[2] = 3;
+        exponent = 1.5f;
+        heightMap = CreateHeights();
+        maskWMap = MergerMask(heightMap, maskWMap, 1, 0);
+        globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[2]);
+        //depth = example.depth;
+        //scale = example.scale;
+        //exponent = example.exponent;
+        //noiseCoefficients = example.noiseCoefficients;
+
+
+
+        // конец сексу
         terrainData.heightmapResolution = width + 1;
         terrainData.size = new Vector3(width, depth, height);
         heightMap = CreateHeights();
-        terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
+        terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
         return terrainData;
     }
+    private void Update()
+    {
+        Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
+        if (Input.GetKey(KeyCode.Y))
+        {
+            Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, maskWMap/*heightMap*/);
+        }
+        if (Input.GetKey(KeyCode.U))
+        {
+            Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
+        }
+        //Terrain.terrainData = CreateTerrain(Terrain.terrainData);
+    }
 
-    
 
     /*По координатам карты (для карты)*/
     float[,] CreateHeights()
@@ -75,7 +307,7 @@ public class TerrainGenerator : Generator
         return CreateHeights(width, height, calculated);
     }
 
-  
+
 
 
     public override float CalculateHeight(int x, int y)
