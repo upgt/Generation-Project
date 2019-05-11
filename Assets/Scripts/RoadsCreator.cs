@@ -514,56 +514,63 @@ public class RoadsCreator : MonoBehaviour
                 int z = point.z + b;
                 float len = Mathf.Sqrt(a * a + b * b) / roadWidth; //расстояние от центра
 
-                if (len <= 3)
+                try
                 {
-                    if (len <= 2)
+                    if (len <= 3)
                     {
-                        if (len <= 1)
+                        if (len <= 2)
                         {
-                            // отрисовка дороги 
-                            for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++) // цикл по текстурам точки 
+                            if (len <= 1)
                             {
-                                // X альфамапы = Z глобальных координат 
-                                // Y альфамапы = X глобальных координат
-                                // разрешение меша 1024, а разрешение альфа текстур 512, 
-                                // поэтому берём координату высоты / 2
-                                if (textureIndex == roadTextureIndex)
-                                    alphaMaps[z / 2, x / 2, textureIndex] = 1;
-                                else alphaMaps[z / 2, x / 2, textureIndex] = 0;
+                                // отрисовка дороги 
+                                for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++) // цикл по текстурам точки 
+                                {
+                                    // X альфамапы = Z глобальных координат 
+                                    // Y альфамапы = X глобальных координат
+                                    // разрешение меша 1024, а разрешение альфа текстур 512, 
+                                    // поэтому берём координату высоты / 2
+                                    if (textureIndex == roadTextureIndex)
+                                        alphaMaps[z / 2, x / 2, textureIndex] = 1;
+                                    else alphaMaps[z / 2, x / 2, textureIndex] = 0;
+                                }
+
+                                float mediumRoadHeight = 0;
+                                int n = 0;
+                                for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
+                                    for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
+                                    {
+                                        mediumRoadHeight += defaultHeightMap[z, x];
+                                        n++;
+                                    }
+                                mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
+
+                                if (mediumRoadHeight < heightMap[z, x])
+                                    heightMap[z, x] = mediumRoadHeight;
                             }
+                            else
+                            {
+                                float mediumRoadHeight = 0;
+                                int n = 0;
+                                for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
+                                    for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
+                                    {
+                                        mediumRoadHeight += defaultHeightMap[z, x];
+                                        n++;
+                                    }
+                                float coef = (1 + Mathf.Cos(Mathf.PI * (len - 1))) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
+                                mediumRoadHeight = mediumRoadHeight / n - roadLow * coef; // итоговая средняя высота, учитывая понижение дороги
 
-                            float mediumRoadHeight = 0;
-                            int n = 0;
-                            for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
-                                for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
-                                {
-                                    mediumRoadHeight += defaultHeightMap[z, x];
-                                    n++;
-                                }
-                            mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
-
-                            if (mediumRoadHeight < heightMap[z, x])
-                                heightMap[z, x] = mediumRoadHeight;
+                                if (mediumRoadHeight < heightMap[z, x])
+                                    heightMap[z, x] = mediumRoadHeight;
+                            }
+                            treePlaceInfo[z, x] = 0f;
                         }
-                        else
-                        {
-                            float mediumRoadHeight = 0;
-                            int n = 0;
-                            for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
-                                for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
-                                {
-                                    mediumRoadHeight += defaultHeightMap[z, x];
-                                    n++;
-                                }
-                            float coef = (1 + Mathf.Cos(Mathf.PI * (len - 1))) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
-                            mediumRoadHeight = mediumRoadHeight / n - roadLow * coef; // итоговая средняя высота, учитывая понижение дороги
-
-                            if (mediumRoadHeight < heightMap[z, x])
-                                heightMap[z, x] = mediumRoadHeight;
-                        }
-                        treePlaceInfo[z, x] = 0f;
+                        else treePlaceInfo[z, x] = 0.5f;
                     }
-                    else treePlaceInfo[z,x] = 0.5f;
+                }
+                catch(System.IndexOutOfRangeException)
+                {
+                    Debug.Log("MakePoint System.IndexOutOfRangeException z = " + z.ToString() + "; x = " + x.ToString());
                 }
             }
     }
