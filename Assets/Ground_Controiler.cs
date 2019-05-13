@@ -1,35 +1,135 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts;
+
 
 public class Ground_Controiler : MonoBehaviour
 {
-    public List<TerrainLayer> Graund;
-    public List<TerrainLayer> Water;
-    public Terrain terrain;
-    // Start is called before the first frame update
+    TreeGenerate height;
+    [System.Serializable]
+    public class GroundInfo
+    {
+        public TerrainLayer graund;
+        public float density = 0.5f;
+        public int protorype = -1;
+
+        public static implicit operator TerrainLayer(GroundInfo a)
+        {
+            return a.graund;
+        }
+
+        public static implicit operator int(GroundInfo a)
+        {
+            return a.protorype;
+        }
+
+        public static implicit operator float(GroundInfo a)
+        {
+            return a.density;
+        }
+    }
+
+    public List<GroundInfo> Ground;
+    public float preDomTextGraund = 1;
+    public List<GroundInfo> Water;
+    private Terrain terrain;
+    public TerrainGenerator terrainGenerator;
+    TerrainData terrainData;
+    System.Random rn;
+
+    void TestLayer(List<GroundInfo> example)
+    {
+        for (int i = 0; i < terrainData.terrainLayers.Length; i++)
+        {
+            for (int j = 0; j < example.Count; j++)
+            {
+                if (terrainData.terrainLayers[i].GetHashCode() == example[j].graund.GetHashCode())
+                {
+                    example[j].protorype = i;
+                }
+            }
+        }
+
+        for (int j = 0; j < example.Count; j++)
+        {
+            if (example[j].protorype == -1)
+            {
+                throw new System.Exception("excessive texture at number: " + j.ToString());
+            }
+        }
+    }
+    public float CalculateHeight(int x, int y)
+    {
+        return 0.001f * rn.Next(0, 1000);
+    }
+
+    float[,] heights;
     void Start()
     {
+        rn = new System.Random();
+        Calculated funk = new Calculated(CalculateHeight);
+        float[,] nul = new float[0, 0];
+        height = new TreeGenerate(nul);
         terrain = GetComponent<Terrain>();
-        var terrainData = terrain.terrainData;
-        var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
+        terrainData = terrain.terrainData;
+        TestLayer(Ground);
+        TestLayer(Water);
+        addTexture(Ground, funk, terrainGenerator.maskGround);
+        addTexture(Water, funk, terrainGenerator.maskWater);
+    }
 
-       // terrainData.splatPrototypes.;
+    private void zeroAnother(float[,,] alphaMaps, int ex1, int ex2, int x, int z)
+    {
+        for (int i = 0; i < alphaMaps.GetLength(2); i++)
+        {
+            if (i != ex1 && i != ex2)
+            {
+                alphaMaps[x, z, i] = 0;
+            }
+        }
+    }
+
+    private void addTexture(List<GroundInfo> texPrototypes, Calculated funk, float[,] mask)
+    {
+        float alpha;
+        var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
+        heights = height.CreateHeights(alphaMaps.GetLength(0), alphaMaps.GetLength(1), funk);
         for (int x = 0; x < alphaMaps.GetLength(0); x++)
+        {
             for (int z = 0; z < alphaMaps.GetLength(1); z++)
-                for (int textureIndex = 0; textureIndex < 1; textureIndex++)
+            {
+                // X альфамапы = Z глобальных координат
+                // Y альфамапы = X глобальных координат
+                if (mask[x / 2, z / 2] != 1)
                 {
-                    // X альфамапы = Z глобальных координат
-                    // Y альфамапы = X глобальных координат
-                    if (textureIndex == 1)
-                        alphaMaps[z, x, textureIndex] = 1;
-                    else alphaMaps[z, x, textureIndex] = 0;
+                    alpha = heights[x, z] * preDomTextGraund;
+                    alphaMaps[x, z, texPrototypes[1]] = alpha;
+                    alphaMaps[x, z, texPrototypes[0]] = 1 - alpha;
+                    zeroAnother(alphaMaps, texPrototypes[1], texPrototypes[0], x, z);
                 }
+            }
+        }
+        terrainData.SetAlphamaps(0, 0, alphaMaps);
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        //float alpha;
+        //var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
+        //for (int x = 0; x < alphaMaps.GetLength(0); x++)
+        //{
+        //    for (int z = 0; z < alphaMaps.GetLength(1); z++)
+        //    {
+        //        // X альфамапы = Z глобальных координат
+        //        // Y альфамапы = X глобальных координат
+        //        alpha = heights[z, x] * preDomTextGraund;
+        //        alphaMaps[z, x, Graund[1]] = alpha;
+        //        alphaMaps[z, x, Graund[0]] = 1 - alpha;
+        //    }
+        //}
+        //terrainData.SetAlphamaps(0, 0, alphaMaps);
     }
+
 }

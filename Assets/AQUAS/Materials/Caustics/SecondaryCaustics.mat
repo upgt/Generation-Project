@@ -20,14 +20,14 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _Texture:
-        m_Texture: {fileID: 2800000, guid: e641c1eb77a91fc4f8695e3eab202bc0, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2829c4da24ea68c4a900ca4de1184850, type: 3}
         m_Scale: {x: 600, y: 600}
         m_Offset: {x: 0.5, y: 0.5}
     m_Floats:
-    - _DepthFade: -8
+    - _DepthFade: 7.1000004
     - _DistanceVisibility: 10
     - _Fade: 1
     - _Intensity: 0.6
-    - _WaterLevel: 2
+    - _WaterLevel: 20.3
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

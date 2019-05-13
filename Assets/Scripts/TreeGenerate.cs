@@ -9,7 +9,7 @@ namespace Assets.Scripts
 
     public delegate float Calculated(int weight, int height);
 
-    class TreeGenerate : Generator
+    public class TreeGenerate : Generator
     {
         public float minTreeScale = 0.4f; // не более 0,9
         public int maxDist = 4;
@@ -306,7 +306,7 @@ namespace Assets.Scripts
         void GenTree(float xTer, float zTer)
         {
             GenCasts();
-            Calculated calculated = new Calculated(CalculatePerlin);
+            Calculated calculated = new Calculated(CalculateHeight);
             float[,] whiteNoise = CreateHeights(width / minDist, height / minDist, calculated);
             for (int i = 0; i < castCount; i++)
             {
@@ -329,19 +329,16 @@ namespace Assets.Scripts
             return heights;
         }
 
-        public override float CalculateHeight(int x, int y)
-        {
-            return 0.001f * rn.Next(0, 1000);
-        }
+        
 
-        public float CalculatePerlin(int x, int y)
+        public override float CalculateHeight(int x, int y)
         {
             float xCoord = (float)x * minDist / (width / minDist) * 20 + 100;
             float yCoord = (float)y * minDist  / (height / minDist) * 20 + 100;
             return Mathf.PerlinNoise(xCoord,yCoord);
         }
 
-
+        
         private void Update()
         {
             Casts = castCount;

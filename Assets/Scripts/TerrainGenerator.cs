@@ -16,9 +16,14 @@ public class TerrainGenerator : Generator
     // секс переменные
     private System.Random rn;
     private List<float> maskCollect;
-    private int smothAngle = 6;
+    private int smothAngle = 1;
     public float[,] maskWMap;
     float[,] globalMaskMap;
+    float groundRelief = 0.8f;
+
+    public float[,] maskWater;
+    public float[,] maskGround;
+
     // секс закончился
 
 
@@ -45,7 +50,7 @@ public class TerrainGenerator : Generator
         return t.heightMap;
     }
 
-    private void Start()
+    private void Awake()
     {
         rn = new System.Random();
         Terrain = GetComponent<Terrain>();
@@ -112,29 +117,29 @@ public class TerrainGenerator : Generator
         return maskTerrain;
     }
 
-    float[,] waterMask;
-    float[,] createWaterMask(float[,] mask, float waterParam)
+    float[,] mask;
+    float[,] CreateMask(float[,] mask, float waterParam)
     {
-        waterMask = new float[width, height];
+        this.mask = new float[width, height];
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
             {
                 if (mask[i, j] == waterParam)
                 {
-                    waterMask[i, j] = 0;
+                    this.mask[i, j] = 0;
                 }
                 else
                 {
-                    waterMask[i, j] = 1;
+                    this.mask[i, j] = 1;
                 }
             }
         }
-        return waterMask;
+        return this.mask;
     }
 
     private float gbs = 1;
-    float[,] smoothWaterZone(float[,] mask, float param)
+    float[,] SmoothZone(float[,] mask, float param)
     {
         float radSmoothAngle = (param + smothAngle) * Mathf.PI / 180;
         float angle = 0;
@@ -177,16 +182,17 @@ public class TerrainGenerator : Generator
         return mask;
     }
 
-    float[,] MergerMask(float[,] map, float[,] mask, float param, int det = 1)
+  
+    float[,] MergerMask(float[,] map, float[,] mask, float param)
     {
         float[,] result = map;
         for (int i = 1; i < width - 1; i++)
         {
             for (int j = 1; j < height - 1; j++)
             {
-                if (mask[i, j] != det)
+                if (mask[i, j] != 1)
                 {
-                    result[i, j] = mask[i, j] * param;
+                    result[i, j] += mask[i, j] * param;
                 }
             }
         }
@@ -248,17 +254,18 @@ public class TerrainGenerator : Generator
         globalMaskMap = CreateHeights();
         globalMaskMap = InterpolatedMask(globalMaskMap); // убойная хуйня так-же пригодиться для наложения текстур!
         LevelMap(globalMaskMap);
-        maskWMap = createWaterMask(globalMaskMap, levelMap[0]);
+        maskWMap = CreateMask(globalMaskMap, levelMap[0]);
         for (int i = 0; i < 90 / smothAngle; i++)
         {
-            maskWMap = smoothWaterZone(maskWMap, i * smothAngle);
+            maskWMap = SmoothZone(maskWMap, i * smothAngle);
         }
+        maskWater = maskWMap;
         globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1]);
 
         // делаем землю
-        maskWMap = createWaterMask(globalMaskMap, levelMap[1]);
+        maskWMap = CreateMask(globalMaskMap, levelMap[1]);
 
-        depth = 20;
+        depth = 55;
         scale = 4;
         offsetX = rn.Next(0, 10000);
         offsetY = rn.Next(0, 10000);
@@ -269,8 +276,9 @@ public class TerrainGenerator : Generator
         noiseCoefficients[2] = 3;
         exponent = 1.5f;
         heightMap = CreateHeights();
-        maskWMap = MergerMask(heightMap, maskWMap, 1, 0);
-        globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[2]);
+        maskWMap = MergerMask(heightMap, maskWMap, 1);
+        maskGround = maskWMap;
+        globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1] * groundRelief);
         //depth = example.depth;
         //scale = example.scale;
         //exponent = example.exponent;
