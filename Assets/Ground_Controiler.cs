@@ -69,14 +69,12 @@ public class Ground_Controiler : MonoBehaviour
     {
         rn = new System.Random();
         Calculated funk = new Calculated(CalculateHeight);
-        float[,] nul = new float[0, 0];
-        height = new TreeGenerate(nul);
         terrain = GetComponent<Terrain>();
         terrainData = terrain.terrainData;
         TestLayer(Ground);
         TestLayer(Water);
-        addTexture(Ground, funk, terrainGenerator.maskGround);
-        addTexture(Water, funk, terrainGenerator.maskWater);
+        AddTexture(Ground, funk, terrainGenerator.maskGround);
+        AddTexture(Water, funk, terrainGenerator.maskWater);
     }
 
     private void zeroAnother(float[,,] alphaMaps, int ex1, int ex2, int x, int z)
@@ -90,11 +88,11 @@ public class Ground_Controiler : MonoBehaviour
         }
     }
 
-    private void addTexture(List<GroundInfo> texPrototypes, Calculated funk, float[,] mask)
+    private void AddTexture(List<GroundInfo> texPrototypes, Calculated funk, float[,] mask)
     {
         float alpha;
         var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
-        heights = height.CreateHeights(alphaMaps.GetLength(0), alphaMaps.GetLength(1), funk);
+        heights = TreeGenerate.CreateHeights(alphaMaps.GetLength(0), alphaMaps.GetLength(1), funk);
         for (int x = 0; x < alphaMaps.GetLength(0); x++)
         {
             for (int z = 0; z < alphaMaps.GetLength(1); z++)

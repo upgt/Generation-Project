@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641258, b: 0.574817, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641252, b: 0.574817, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -241,15 +241,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bf180aa2793048d48e1950e800039d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  smothAngle: 1
   depth: 55
   height: 256
   width: 256
-  scale: 20
-  offsetX: 100
-  offsetY: 100
-  flatCoefficient: 0.2
-  noiseCoefficients: []
-  exponent: 1
 --- !u!1 &367441992
 GameObject:
   m_ObjectHideFlags: 0
@@ -1222,7 +1217,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1541626258}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 128, y: 20.3, z: 128}
+  m_LocalPosition: {x: 128, y: 18.2, z: 128}
   m_LocalScale: {x: 19200, y: 19200, z: 19200}
   m_Children:
   - {fileID: 1737691555}

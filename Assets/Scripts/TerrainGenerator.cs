@@ -16,10 +16,10 @@ public class TerrainGenerator : Generator
     // секс переменные
     private System.Random rn;
     private List<float> maskCollect;
-    private int smothAngle = 1;
+    public int smothAngle = 1; // пляжный спад или резкий обрыв на воде 
     public float[,] maskWMap;
     float[,] globalMaskMap;
-    float groundRelief = 0.8f;
+    float groundRelief = 0.8f; // Холмистость рельефа земли
 
     public float[,] maskWater;
     public float[,] maskGround;
@@ -28,18 +28,17 @@ public class TerrainGenerator : Generator
 
 
     public int depth = 20;
-    //public int plainDepth = 20;
     public float[,] heightMap;
     public int height = 256;
     public int width = 256;
 
-    public float scale = 20f;
-    public float offsetX = 100f;
-    public float offsetY = 100f;
+    private float scale;
+    private float offsetX;
+    private float offsetY;
 
-    public float flatCoefficient = 0.2f;    //сглаживание шума
-    public float[] noiseCoefficients;
-    public float exponent = 1f;
+    private float flatCoefficient;    //сглаживание шума
+    private float[] noiseCoefficients;
+    private float exponent;
     private float[,] heights;
 
     private float xTerrain = 0;
@@ -117,47 +116,46 @@ public class TerrainGenerator : Generator
         return maskTerrain;
     }
 
-    float[,] mask;
     float[,] CreateMask(float[,] mask, float waterParam)
     {
-        this.mask = new float[width, height];
+        float[,] result = new float[width, height];
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
             {
                 if (mask[i, j] == waterParam)
                 {
-                    this.mask[i, j] = 0;
+                    result[i, j] = 0;
                 }
                 else
                 {
-                    this.mask[i, j] = 1;
+                    result[i, j] = 1;
                 }
             }
         }
-        return this.mask;
+        return result;
     }
 
-    private float gbs = 1;
+    private float downCoef = 1;
     float[,] SmoothZone(float[,] mask, float param)
     {
         float radSmoothAngle = (param + smothAngle) * Mathf.PI / 180;
         float angle = 0;
         float smoothCoef;
-        angle = Mathf.Acos(gbs);
+        angle = Mathf.Acos(downCoef);
         angle += radSmoothAngle;
         smoothCoef = (Mathf.Cos(angle) + 1) / 2;
 
         if (param == 0)
         {
-            gbs = 1;
+            downCoef = 1;
         }
 
         for (int i = 1; i < width - 1; i++)
         {
             for (int j = 1; j < height - 1; j++)
             {
-                if (mask[i, j] == gbs)
+                if (mask[i, j] == downCoef)
                 {
                     if (mask[i + 1, j] == 0)
                     {
@@ -178,11 +176,11 @@ public class TerrainGenerator : Generator
                 }
             }
         }
-        gbs = smoothCoef;
+        downCoef = smoothCoef;
         return mask;
     }
 
-  
+
     float[,] MergerMask(float[,] map, float[,] mask, float param)
     {
         float[,] result = map;
@@ -202,9 +200,9 @@ public class TerrainGenerator : Generator
     bool IsUnique(float param, List<float> list)
     {
         bool result = true;
-        for(int i = 0; i < list.Count; i++)
+        for (int i = 0; i < list.Count; i++)
         {
-            if(list[i] == param)
+            if (list[i] == param)
             {
                 result = false;
             }
@@ -220,7 +218,7 @@ public class TerrainGenerator : Generator
         {
             for (int j = 1; j < height - 1; j++)
             {
-                if(IsUnique(map[i,j], levelMap))
+                if (IsUnique(map[i, j], levelMap))
                 {
                     levelMap.Add(map[i, j]);
                 }
@@ -228,33 +226,37 @@ public class TerrainGenerator : Generator
         }
         levelMap.Sort();
     }
+
+    private void RandomizeOffset()
+    {
+        offsetX = rn.Next(0, 10000);
+        offsetY = rn.Next(0, 10000);
+    }
+
+    private void SetDefaultNoiseCoefs(float coreCoef, float c1 = 0, float c2 = 0)
+    {
+        noiseCoefficients = new float[3];
+        noiseCoefficients[0] = coreCoef;
+        noiseCoefficients[1] = c1;
+        noiseCoefficients[2] = c2;
+    }
     // функции секса умерли
 
     TerrainData CreateTerrain(TerrainData terrainData)
     {
-        // зона секса
-        TerrainGenerator example = new TerrainGenerator();
-        example.depth = depth;
-        example.scale = scale;
-        example.noiseCoefficients = noiseCoefficients;
-        example.flatCoefficient = flatCoefficient;
-
-        depth = 20;
-        scale = 2;
-        offsetX = rn.Next(0, 10000);
-        offsetY = rn.Next(0, 10000);
-        flatCoefficient = 0.03f;
-        noiseCoefficients = new float[3];
-        noiseCoefficients[0] = 1;
-        noiseCoefficients[1] = 0;
-        noiseCoefficients[2] = 0;
-        exponent = 3.3f;
+        // делаем секс
         terrainData.heightmapResolution = width + 1;
         terrainData.size = new Vector3(width, depth, height);
+
+        SetDefaultNoiseCoefs(1);
+
+        SetTerrainValues(2, 0.03f, 3.3f);
+
         globalMaskMap = CreateHeights();
-        globalMaskMap = InterpolatedMask(globalMaskMap); // убойная хуйня так-же пригодиться для наложения текстур!
+
+        globalMaskMap = InterpolatedMask(globalMaskMap);
         LevelMap(globalMaskMap);
-        maskWMap = CreateMask(globalMaskMap, levelMap[0]);
+        maskWMap = CreateMask(globalMaskMap, levelMap[0]); // создать маску по уровню
         for (int i = 0; i < 90 / smothAngle; i++)
         {
             maskWMap = SmoothZone(maskWMap, i * smothAngle);
@@ -265,34 +267,25 @@ public class TerrainGenerator : Generator
         // делаем землю
         maskWMap = CreateMask(globalMaskMap, levelMap[1]);
 
-        depth = 55;
-        scale = 4;
-        offsetX = rn.Next(0, 10000);
-        offsetY = rn.Next(0, 10000);
-        flatCoefficient = 0.7f;
-        noiseCoefficients = new float[3];
-        noiseCoefficients[0] = 1;
-        noiseCoefficients[1] = 2;
-        noiseCoefficients[2] = 3;
-        exponent = 1.5f;
+        SetTerrainValues(4, 0.7f, 1.5f);
+
         heightMap = CreateHeights();
         maskWMap = MergerMask(heightMap, maskWMap, 1);
         maskGround = maskWMap;
         globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1] * groundRelief);
-        //depth = example.depth;
-        //scale = example.scale;
-        //exponent = example.exponent;
-        //noiseCoefficients = example.noiseCoefficients;
-
-
-
         // конец сексу
-        terrainData.heightmapResolution = width + 1;
-        terrainData.size = new Vector3(width, depth, height);
-        heightMap = CreateHeights();
-        terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
+        terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap);
         return terrainData;
     }
+
+    private void SetTerrainValues(float scale, float flat, float exp)
+    {
+        this.scale = scale;
+        RandomizeOffset();
+        flatCoefficient = flat;
+        exponent = exp;
+    }
+
     private void Update()
     {
         Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);

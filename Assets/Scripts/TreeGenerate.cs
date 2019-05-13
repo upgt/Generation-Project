@@ -9,7 +9,7 @@ namespace Assets.Scripts
 
     public delegate float Calculated(int weight, int height);
 
-    public class TreeGenerate : Generator
+    public class TreeGenerate : MonoBehaviour
     {
         public float minTreeScale = 0.4f; // не более 0,9
         public int maxDist = 4;
@@ -316,7 +316,7 @@ namespace Assets.Scripts
             DrawTreeCast();
         }
 
-        public override float[,] CreateHeights(int w, int h, Calculated calculate)
+        public static  float[,] CreateHeights(int w, int h, Calculated calculate)
         {
             float[,] heights = new float[w, h];
             for (int x = 0; x < w; x++)
@@ -331,7 +331,7 @@ namespace Assets.Scripts
 
         
 
-        public override float CalculateHeight(int x, int y)
+        public float CalculateHeight(int x, int y)
         {
             float xCoord = (float)x * minDist / (width / minDist) * 20 + 100;
             float yCoord = (float)y * minDist  / (height / minDist) * 20 + 100;
