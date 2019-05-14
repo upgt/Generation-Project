@@ -33,9 +33,11 @@ public class RoadsCreator : MonoBehaviour
     private float tooHighCenter = 0.0055f; //насколько дорога может меняться по высоте вдоль центральной линии
     private float tooHighLeftRight = 0.019f; //насколько сильно может отличаться высота левого и бравого бока дороги
 
+    TerrainData terrainData;
+
     public void MakeRoads(Road[] roads)
     {
-        TerrainData terrainData = GetComponent<Terrain>().terrainData;
+        terrainData = GetComponent<Terrain>().terrainData;
         var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
         var heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         var texturesCount = terrainData.splatPrototypes.Length;
@@ -47,6 +49,8 @@ public class RoadsCreator : MonoBehaviour
                 treePlaceInfo[j, k] = 1;
 
         CleanAlphaMaps(alphaMaps, terrainData.alphamapWidth, terrainData.alphamapHeight, texturesCount);
+
+        float[,,] everythingMap = (float[,,])alphaMaps.Clone();
 
         int tracksLen = 0; //для непостоянности колеи
 
@@ -472,6 +476,7 @@ public class RoadsCreator : MonoBehaviour
                     MakePoint(points[i+1], texturesCount, alphaMaps, heightMap, defaultHeightMap);
             }
         }
+        alphaMaps = MixAlphaMaps(alphaMaps, everythingMap, roadTextureIndex, 2);
         terrainData.SetAlphamaps(0, 0, alphaMaps);
         terrainData.SetHeights(0, 0, heightMap);
     }
@@ -481,6 +486,8 @@ public class RoadsCreator : MonoBehaviour
         TerrainData terrainData = GetComponent<Terrain>().terrainData;
         var roads = new Road[Random.Range(1, 5)]; //от 1 до 4 дорог
         int border = roadWidth * 4 + roadFlexure / 2; // минимальное расстояние дорог от края карты
+        if (terrainData.heightmapHeight <= border * 2 || terrainData.heightmapWidth <= border * 2)
+            Debug.Log("No place for random roads, heightMap is too small. It should be more than " + terrainData.heightmapWidth.ToString() + "x" + terrainData.heightmapHeight.ToString() + ".");
         for (var road=0; road<roads.Length;road++)
         {
             roads[road] = new Road { };
@@ -493,6 +500,43 @@ public class RoadsCreator : MonoBehaviour
             }
         }
         return roads;
+    }
+
+    public float[,,] MixAlphaMaps(float[,,] roadMap, float[,,] everythingMap, int textureMixIndex, int diameterOfMixing)
+    {
+        // roadMap - карта с нарисованной на ней дорогой (лужей)
+        // everythingMap - карта ДО момента рисования дороги (лужи)
+        // textureMixIndex - индекс текстуры дороги (лужи)
+        // diameterOfMixing - область размером diameterOfMixing x diameterOfMixing вокруг точки будет смешиваться
+
+        float[,,] resultMap = (float[,,])roadMap.Clone();
+        for (var x = 1; x < terrainData.alphamapHeight - 1; x++)
+            for (var z = 1; z < terrainData.alphamapWidth - 1; z++)
+            {
+                if (roadMap[z, x, textureMixIndex] == 1f) //если в точке нарисована наша текстура для смешивания
+                    if (
+                        roadMap[z - 1, x, textureMixIndex] < 1f ||
+                        roadMap[z, x - 1, textureMixIndex] < 1f ||
+                        roadMap[z + 1, x, textureMixIndex] < 1f ||
+                        roadMap[z, x + 1, textureMixIndex] < 1f)  //если точка лежит на границе разных текстур
+                    {
+                        int x1 = x - diameterOfMixing / 2;
+                        int z1 = z - diameterOfMixing / 2;
+                        for (var j = 0; j < diameterOfMixing; j++)
+                            for (var k = 0; k < diameterOfMixing; k++)
+                                if (Random.value > 0.5f) //если верно, закрашиваем своей текстурой (дорогой/лужей)
+                                    for (int textureIndex = 0; textureIndex < terrainData.splatPrototypes.Length; textureIndex++)
+                                    {
+                                        if (textureIndex == textureMixIndex)
+                                            resultMap[z1 + k, x1 + j, textureIndex] = 1f;
+                                        else resultMap[z1 + k, x1 + j, textureIndex] = 0f;
+                                    }
+                                else //иначе закрашиваем тем, что было ДО дороги (лужи)
+                                    for (int textureIndex = 0; textureIndex < terrainData.splatPrototypes.Length; textureIndex++)
+                                        resultMap[z1 + k, x1 + j, textureIndex] = everythingMap[z1 + k, x1 + j, textureIndex];
+                    }
+            }
+        return resultMap;
     }
 
     private void CleanAlphaMaps(float[,,] alphaMaps, int alphamapWidth, int alphamapHeight, int texturesCount) //очистить альфамапы от текстуры дороги
