@@ -487,7 +487,7 @@ public class RoadsCreator : MonoBehaviour
         var roads = new Road[Random.Range(1, 5)]; //от 1 до 4 дорог
         int border = roadWidth * 4 + roadFlexure / 2; // минимальное расстояние дорог от края карты
         if (terrainData.heightmapHeight <= border * 2 || terrainData.heightmapWidth <= border * 2)
-            Debug.Log("No place for random roads, heightMap is too small. It should be more than " + terrainData.heightmapWidth.ToString() + "x" + terrainData.heightmapHeight.ToString() + ".");
+            Debug.Log("No place for random roads, heightMap is too small. It should be more than " + border * 2 + "x" + border * 2 + ".");
         for (var road=0; road<roads.Length;road++)
         {
             roads[road] = new Road { };
