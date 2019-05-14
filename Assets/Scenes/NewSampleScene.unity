@@ -207,11 +207,11 @@ MonoBehaviour:
   depth: 256
   width: 256
   height: 256
-  grain: 6.34
+  grain: 6.56
   r: 0.3
-  mountainsX: bf000000
-  mountainsY: 9b000000
-  mountainsW: 64000000
+  mountainsX: 0000000014000000140000005a000000
+  mountainsY: 00000000000000002800000059000000
+  mountainsW: 6400000064000000640000009a000000
 --- !u!1 &1085761149
 GameObject:
   m_ObjectHideFlags: 0
