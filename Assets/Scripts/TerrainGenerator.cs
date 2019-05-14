@@ -20,8 +20,9 @@ public class Generator : MonoBehaviour
 }
 public class TerrainGenerator : Generator
 {
+
     public int depth = 256;
-    public float[,] heightMap;
+    public float[,] heightMap;  
     public int width = 256;
     public int height = 256;
     public float grain = 8; // Коэффициент зернистости
@@ -32,8 +33,10 @@ public class TerrainGenerator : Generator
     public int[] mountainsY;
     public int[] mountainsW;
     private List<Mountain> mountains = new List<Mountain>();
+    //массив нулей и единиц
+    public int[,] mountainsNulliki;                         
 
-    private float[,] heights;
+    private float[,] heights;   
 
     private float xTerrain = 0;
     private float zTerrain = 0;
@@ -45,9 +48,7 @@ public class TerrainGenerator : Generator
 
     private void Start()
     {
-
         Terrain = GetComponent<Terrain>();
-
         Terrain.terrainData = CreateTerrain(Terrain.terrainData);
 
         // Работает только тогда когда в массиве деревьев есть хотя бы одно деревоVector3 position = new Vector3(xTerrain, 0, zTerrain);                     
@@ -64,18 +65,23 @@ public class TerrainGenerator : Generator
         //создаем равнину
         DiamondSquare diamondSquare = new DiamondSquare(width, height, grain, r, false);
         heights = diamondSquare.DrawPlasma(width, height);
+        mountainsNulliki = new int[width, height];
+        SetOnes(mountainsNulliki);
 
         //располагаем горы на карте
         for (int i = 0; i<mountainsW.Length; i++)
         {
-            int x = mountainsX[i] > 0 ? mountainsX[i]: 0;
+            int x = mountainsX[i] > 0 ? mountainsX[i] : 0;
             int y = mountainsY[i] > 0 ? mountainsY[i] : 0;
             int w = mountainsW[i] > 0 ? mountainsW[i] : 0;
             mountains.Add(new Mountain(x, y, w, InitMountainBase(x, y, w)));
         }
 
         foreach (Mountain e in mountains)
+        {
             e.SetOnField(heights);
+            e.SetNull(mountainsNulliki);
+        }
 
         // Применяем изменения
         terrainData.size = new Vector3(width, depth, height);
@@ -83,6 +89,12 @@ public class TerrainGenerator : Generator
         terrainData.SetHeights(0, 0, heights);
 
         return terrainData;
+    }
+    private void SetOnes(int[,] array)
+    {
+        for (int i = 0; i < array.GetLength(0); i++)
+            for (int j = 0; i < array.GetLength(1); j++)
+                array[i, j] = 1;
     }
 
     private float[] InitMountainBase(int x, int y, int w)
