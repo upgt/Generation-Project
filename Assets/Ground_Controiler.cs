@@ -33,6 +33,8 @@ public class Ground_Controiler : MonoBehaviour
     public List<GroundInfo> Ground;
     public float preDomTextGraund = 1;
     public List<GroundInfo> Water;
+    public List<GroundInfo> Mountain;
+    public List<GroundInfo> Road;
     private Terrain terrain;
     public TerrainGenerator terrainGenerator;
     TerrainData terrainData;
@@ -65,7 +67,7 @@ public class Ground_Controiler : MonoBehaviour
     }
 
     float[,] heights;
-    void Start()
+    public void StartGroundControl()
     {
         rn = new System.Random();
         Calculated funk = new Calculated(CalculateHeight);
@@ -73,6 +75,7 @@ public class Ground_Controiler : MonoBehaviour
         terrainData = terrain.terrainData;
         TestLayer(Ground);
         TestLayer(Water);
+        TestLayer(Road);
         AddTexture(Ground, funk, terrainGenerator.maskGround);
         AddTexture(Water, funk, terrainGenerator.maskWater);
     }
