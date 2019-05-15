@@ -10,8 +10,10 @@ namespace Assets.Scripts
     {
         public Ground_Controiler textures;
         public RoadsCreator roads;
+        public TerrainGenerator tg;
         void Start()
         {
+            tg.StartTG();
             textures.StartGroundControl();
             roads.StartRoads();
         }

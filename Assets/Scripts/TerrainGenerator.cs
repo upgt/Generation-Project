@@ -3,6 +3,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using Assets.Scripts;
 
+delegate bool Deleg(float f1, float f2);
+
 public abstract class Generator : MonoBehaviour
 {
     public virtual Terrain Terrain { get; set; }
@@ -49,7 +51,7 @@ public class TerrainGenerator : Generator
         return t.heightMap;
     }
 
-    private void Awake()
+    public void StartTG()
     {
         rn = new System.Random();
         Terrain = GetComponent<Terrain>();
@@ -116,14 +118,14 @@ public class TerrainGenerator : Generator
         return maskTerrain;
     }
 
-    float[,] CreateMask(float[,] mask, float waterParam)
+    float[,] CreateMask(float[,] mask, float waterParam, Deleg func)
     {
         float[,] result = new float[width, height];
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
             {
-                if (mask[i, j] == waterParam)
+                if (func(mask[i, j] ,waterParam))
                 {
                     result[i, j] = 0;
                 }
@@ -135,6 +137,12 @@ public class TerrainGenerator : Generator
         }
         return result;
     }
+
+    bool CheckEqual(float f1, float f2)
+    {
+        return f1 == f2;
+    }
+    
 
     private float downCoef = 1;
     float[,] SmoothZone(float[,] mask, float param)
@@ -244,6 +252,7 @@ public class TerrainGenerator : Generator
 
     TerrainData CreateTerrain(TerrainData terrainData)
     {
+        Deleg func = new Deleg(CheckEqual);
         // делаем секс
         terrainData.heightmapResolution = width + 1;
         terrainData.size = new Vector3(width, depth, height);
@@ -256,7 +265,7 @@ public class TerrainGenerator : Generator
 
         globalMaskMap = InterpolatedMask(globalMaskMap);
         LevelMap(globalMaskMap);
-        maskWMap = CreateMask(globalMaskMap, levelMap[0]); // создать маску по уровню
+        maskWMap = CreateMask(globalMaskMap, levelMap[0], func); // создать маску по уровню
         for (int i = 0; i < 90 / smothAngle; i++)
         {
             maskWMap = SmoothZone(maskWMap, i * smothAngle);
@@ -265,7 +274,7 @@ public class TerrainGenerator : Generator
         globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1]);
 
         // делаем землю
-        maskWMap = CreateMask(globalMaskMap, levelMap[1]);
+        maskWMap = CreateMask(globalMaskMap, levelMap[1], func);
 
         SetTerrainValues(4, 0.7f, 1.5f);
 
@@ -288,7 +297,7 @@ public class TerrainGenerator : Generator
 
     private void Update()
     {
-        Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
+        //Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
         if (Input.GetKey(KeyCode.Y))
         {
             Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, maskWMap/*heightMap*/);

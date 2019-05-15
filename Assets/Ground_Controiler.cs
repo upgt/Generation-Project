@@ -66,11 +66,13 @@ public class Ground_Controiler : MonoBehaviour
         return 0.001f * rn.Next(0, 1000);
     }
 
+    public Calculated funk;
+
     float[,] heights;
     public void StartGroundControl()
     {
         rn = new System.Random();
-        Calculated funk = new Calculated(CalculateHeight);
+        funk = new Calculated(CalculateHeight);
         terrain = GetComponent<Terrain>();
         terrainData = terrain.terrainData;
         TestLayer(Ground);
@@ -78,6 +80,7 @@ public class Ground_Controiler : MonoBehaviour
         TestLayer(Road);
         AddTexture(Ground, funk, terrainGenerator.maskGround);
         AddTexture(Water, funk, terrainGenerator.maskWater);
+        
     }
 
     private void zeroAnother(float[,,] alphaMaps, int ex1, int ex2, int x, int z)
@@ -91,7 +94,7 @@ public class Ground_Controiler : MonoBehaviour
         }
     }
 
-    private void AddTexture(List<GroundInfo> texPrototypes, Calculated funk, float[,] mask)
+    public void AddTexture(List<GroundInfo> texPrototypes, Calculated funk, float[,] mask)
     {
         float alpha;
         var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
