@@ -72,7 +72,7 @@ Material:
         m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Fade: 0.031
+    - _Fade: 0.001
     - _FadeSlider: 0.1
     - _Glossiness: 0.5
     - _Metallic: 0
