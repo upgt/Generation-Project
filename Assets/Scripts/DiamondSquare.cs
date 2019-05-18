@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine;
 
 public class DiamondSquare
@@ -12,8 +11,8 @@ public class DiamondSquare
     private float WH;
     private float[,] heights;
 
-    private static readonly float minWHM = 100 / 0.2f;
-    private static readonly float maxWHM = 100 / 0.5f;
+    private static readonly float minWHM = 100 / 0.6f;
+    private static readonly float maxWHM = 100 / 0.9f;
     private float dispMin;
     private float dispMax;
 
@@ -32,7 +31,7 @@ public class DiamondSquare
     // Считаем рандомный коэффициент смещения для высоты
     float DisplaceField(float num)
     {
-        float max = num / WH * GRAIN * 0.25f;
+        float max = num / WH * GRAIN * 0.15f;
         return UnityEngine.Random.Range(-0.5f, 0.5f) * max;
     }
     // Считаем рандомный коэффициент смещения для высоты
@@ -51,10 +50,10 @@ public class DiamondSquare
     // Вызов функции отрисовки с параметрами
     public float[,] DrawPlasma(float w, float h)
     {
-        float c1 = UnityEngine.Random.Range(0.2f, 0.25f);
-        float c2 = UnityEngine.Random.Range(0.2f, 0.25f);
-        float c3 = UnityEngine.Random.Range(0.2f, 0.25f);
-        float c4 = UnityEngine.Random.Range(0.2f, 0.25f);
+        float c1 = UnityEngine.Random.Range(0.4f, 0.45f);
+        float c2 = UnityEngine.Random.Range(0.4f, 0.45f);
+        float c3 = UnityEngine.Random.Range(0.4f, 0.45f);
+        float c4 = UnityEngine.Random.Range(0.4f, 0.45f);
 
         Divide(0.0f, 0.0f, w, h, c1, c2, c3, c4);
 
@@ -71,7 +70,7 @@ public class DiamondSquare
 
         if (!Mountain)
             Divide(0.0f, 0.0f, w, h, _c1, _c2, _c3, _c4);
-        else 
+        else
             DivideMountain(0.0f, 0.0f, w, h, _c1, _c2, _c3, _c4);
 
         return heights;

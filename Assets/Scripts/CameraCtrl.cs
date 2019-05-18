@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
-public class CameraCtrl : MonoBehaviour
-{
+public class CameraCtrl : MonoBehaviour {
+
     public Vector3 Position;
     public Vector3 offset;
     public float sensitivity = 3; // чувствительность мышки
@@ -13,7 +13,7 @@ public class CameraCtrl : MonoBehaviour
     public float speed = 60f;
 
     void Start()
-    {
+    { 
         limit = Mathf.Abs(limit);
         if (limit > 90) limit = 90;
         offset = new Vector3(offset.x, offset.y, -Mathf.Abs(zoomMax) / 2);
@@ -48,5 +48,6 @@ public class CameraCtrl : MonoBehaviour
         Y = Mathf.Clamp(Y, -limit, limit);
         transform.localEulerAngles = new Vector3(-Y, X, 0);
         transform.position = transform.localRotation * offset + Position;
-    }
+    }           
 }
+
