@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
+using Assets.Texture;
 namespace Assets.Scripts
 {
     
@@ -10,12 +10,14 @@ namespace Assets.Scripts
     {
         public Ground_Controiler textures;
         public RoadsCreator roads;
+        public TreeGenerate tree;
         public TerrainGenerator tg;
         void Start()
         {
             tg.StartTG();
-            textures.StartGroundControl();
-            roads.StartRoads();
+            textures.StartGroundControl(tg);
+            tree.treeStart(tg,textures);
+           // roads.StartRoads();
         }
     }
 }

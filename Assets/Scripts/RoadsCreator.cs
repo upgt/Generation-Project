@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Texture;
 
 [System.Serializable]
 public class Point
@@ -60,7 +61,7 @@ public class RoadsCreator : MonoBehaviour
 
         int tracksLen = 0; //для непостоянности колеи
 
-        float[,] groundInfo = textures.terrainGenerator.maskGround;//если меньше 1f, то это земля.
+        //float[,] groundInfo = textures.terrainGenerator.maskGround;//если меньше 1f, то это земля.
         
 
         foreach (Road road in roads)

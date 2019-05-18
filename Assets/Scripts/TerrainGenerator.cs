@@ -18,7 +18,7 @@ public class TerrainGenerator : Generator
     // секс переменные
     private System.Random rn;
     private List<float> maskCollect;
-    public int smothAngle = 1; // пляжный спад или резкий обрыв на воде 
+    public int smothAngle = 1; // пляжный спад или резкий обрыв на воде
     public float[,] maskWMap;
     float[,] globalMaskMap;
     float groundRelief = 0.8f; // Холмистость рельефа земли
@@ -112,6 +112,11 @@ public class TerrainGenerator : Generator
                 {
                     param = (maskTerrain[i, j] * 10 % 3) * 0.1f;
                     maskTerrain[i, j] = maskTerrain[i, j] - param;
+
+                    if (maskTerrain[i, j] >= 0.6f)
+                    {
+                        maskTerrain[i, j] = 0.3f;
+                    }
                 }
             }
         }
@@ -145,6 +150,17 @@ public class TerrainGenerator : Generator
     
 
     private float downCoef = 1;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="mask"></param>
+    /// Маска для сглаживания
+    /// <param name="param"></param>
+    /// параметр сглаживание - чем меньше параметр тем слабее диформаиция (желательные параметры от 1 до 90)
+    /// <param name="smothAngle"></param>
+    /// итоговый угол 
+    /// <returns></returns>
     float[,] SmoothZone(float[,] mask, float param)
     {
         float radSmoothAngle = (param + smothAngle) * Mathf.PI / 180;
@@ -265,12 +281,14 @@ public class TerrainGenerator : Generator
 
         globalMaskMap = InterpolatedMask(globalMaskMap);
         LevelMap(globalMaskMap);
+        maskWMap = CreateMask(globalMaskMap, levelMap[1], func);
+        maskGround = maskWMap;
         maskWMap = CreateMask(globalMaskMap, levelMap[0], func); // создать маску по уровню
+        maskWater = maskWMap;
         for (int i = 0; i < 90 / smothAngle; i++)
         {
             maskWMap = SmoothZone(maskWMap, i * smothAngle);
         }
-        maskWater = maskWMap;
         globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1]);
 
         // делаем землю
@@ -280,8 +298,10 @@ public class TerrainGenerator : Generator
 
         heightMap = CreateHeights();
         maskWMap = MergerMask(heightMap, maskWMap, 1);
-        maskGround = maskWMap;
         globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1] * groundRelief);
+
+
+
         // конец сексу
         terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap);
         return terrainData;

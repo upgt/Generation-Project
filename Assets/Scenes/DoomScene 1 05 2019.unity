@@ -125,6 +125,8 @@ GameObject:
   - component: {fileID: 341229294}
   - component: {fileID: 341229297}
   - component: {fileID: 341229298}
+  - component: {fileID: 341229300}
+  - component: {fileID: 341229299}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -218,7 +220,7 @@ MonoBehaviour:
       type: 2}
     density: 0.3
     protorype: 0
-  preDomTextGraund: 0.54
+  preDomTextGraund: 0.21
   Water:
   - graund: {fileID: 8574412962073106934, guid: 5b5d81490f8456f469b824080dc709bb,
       type: 2}
@@ -228,7 +230,8 @@ MonoBehaviour:
       type: 2}
     density: 0
     protorype: 0
-  terrainGenerator: {fileID: 341229298}
+  Mountain: []
+  Road: []
 --- !u!114 &341229298
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -245,6 +248,41 @@ MonoBehaviour:
   depth: 55
   height: 256
   width: 256
+--- !u!114 &341229299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 341229293}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 733188f06856b6d4286971c20b42ce9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textures: {fileID: 341229297}
+  roads: {fileID: 0}
+  tree: {fileID: 341229300}
+  tg: {fileID: 341229298}
+--- !u!114 &341229300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 341229293}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a71108f30276b44b3e38574aa46574, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minTreeScale: 0.3
+  maxDist: 12
+  minDist: 9
+  Casts: 3
+  hMap: {fileID: 341229298}
+  broadSmall: 22
+  QuestZones: []
 --- !u!1 &367441992
 GameObject:
   m_ObjectHideFlags: 0
@@ -302,7 +340,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 129
+  far clip plane: 249.76
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -1037,7 +1075,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1280770228}
   m_LocalRotation: {x: 0.5731672, y: 0.40232018, z: -0.3826211, w: 0.60267645}
-  m_LocalPosition: {x: 132, y: 71.9, z: 81.8}
+  m_LocalPosition: {x: 0, y: 0, z: 255}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 367441995}

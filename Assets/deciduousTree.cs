@@ -5,6 +5,7 @@ using UnityEngine;
 public class deciduousTree : MonoBehaviour
 {
     public bool isBroadLeaved = false;
+    public float densyty = 0.5f;
     // Start is called before the first frame update
     void Start()
     {
