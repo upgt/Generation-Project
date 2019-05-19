@@ -6,15 +6,15 @@ using Application;
 
 delegate bool Deleg(float f1, float f2);
 
-public abstract class Generator : MonoBehaviour
-{
-    public virtual Terrain Terrain { get; set; }
+//public abstract class Generator : MonoBehaviour
+//{
+//    public virtual Terrain Terrain { get; set; }
 
-    public abstract float[,] CreateHeights(int w, int h, Calculated calculate);
+//    public abstract float[,] CreateHeights(int w, int h, Calculated calculate);
 
-    public abstract float CalculateHeight(int x, int y);
-}
-public class TerrainGenerator : Generator
+//    public abstract float CalculateHeight(int x, int y);
+//}
+public class TerrainGenerator : MonoBehaviour// : Generator
 {
     // секс переменные
     private System.Random rn;
@@ -32,8 +32,8 @@ public class TerrainGenerator : Generator
 
     public int depth = 20;
     public float[,] heightMap;
-    public int height = 256;
-    public int width = 256;
+    public int height;
+    public int width;
 
     private float scale;
     private float offsetX;
@@ -49,9 +49,13 @@ public class TerrainGenerator : Generator
     public float r;
 
     public int mountainsNumber;
+    public int mountainSizeMin;
+    public int mountainSizeMax;
     private List<Mountain> mountains = new List<Mountain>();
 
     public int hollowsNumber;
+    public int hollowSizeMin;
+    public int hollowSizeMax;
     private List<Hollow> hollows = new List<Hollow>();
     //массив нулей и единиц
     public int[,] mountainsNulliki;
@@ -70,7 +74,7 @@ public class TerrainGenerator : Generator
     public void StartTG()
     {
         rn = new System.Random();
-        Terrain = GetComponent<Terrain>();
+        var Terrain = GetComponent<Terrain>();
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
         offsetY = UnityEngine.Random.Range(0, 1000f);
@@ -143,7 +147,7 @@ public class TerrainGenerator : Generator
         {
             for (int j = 0; j < height; j++)
             {
-                if (func(mask[i, j] ,waterParam))
+                if (func(mask[i, j], waterParam))
                 {
                     result[i, j] = 0;
                 }
@@ -160,7 +164,7 @@ public class TerrainGenerator : Generator
     {
         return f1 == f2;
     }
-    
+
 
     private float downCoef = 1;
     float[,] SmoothZone(float[,] mask, float param)
@@ -272,7 +276,7 @@ public class TerrainGenerator : Generator
     {
         Deleg func = new Deleg(CheckEqual);
         // делаем секс
-        terrainData.heightmapResolution = width + 1;
+        terrainData.heightmapResolution = width;
         terrainData.size = new Vector3(width, depth, height);
 
         SetDefaultNoiseCoefs(1);
@@ -309,7 +313,7 @@ public class TerrainGenerator : Generator
         DiamondSquare diamondSquare = new DiamondSquare(width, height, grain, r, false);
         heights = diamondSquare.DrawPlasma(width, height);
         globalMaskMap = new float[width, height];
-        SetOnes(globalMaskMap);
+        SetNull(globalMaskMap);
 
         RandomField(heights);
         LevelMap(globalMaskMap);
@@ -327,14 +331,15 @@ public class TerrainGenerator : Generator
         {
             int x = UnityEngine.Random.Range(0, width - 50);
             int y = UnityEngine.Random.Range(0, width - 50);
-            int w = UnityEngine.Random.Range(50, 140);
+            int w = UnityEngine.Random.Range(mountainSizeMin, mountainSizeMax);
             mountains.Add(new Mountain(x, y, w, InitMountainBase(x, y, w)));
+
             int mSize = UnityEngine.Random.Range(1, 2);
-            for (int j = 0; j<mSize; j++)
+            for (int j = 0; j < mSize; j++)
             {
-                int _x = SelectPoint(x, w * 0.5f);
-                int _y = SelectPoint(x, w * 0.5f);
-                int _w = UnityEngine.Random.Range((int)(w*0.5f), 140);
+                int _x = SelectPoint(x, x + (int)(w * 0.5f));
+                int _y = SelectPoint(y, y + (int)(w * 0.5f));
+                int _w = UnityEngine.Random.Range(mountainSizeMin/2, 100);
                 mountains.Add(new Mountain(_x, _y, _w, InitMountainBase(_x, _y, _w)));
             }
         }
@@ -348,15 +353,16 @@ public class TerrainGenerator : Generator
         {
             int x = UnityEngine.Random.Range(0, width - 50);
             int y = UnityEngine.Random.Range(0, width - 50);
-            int w = UnityEngine.Random.Range(50, 140);
-            hollows.Add(new Hollow(x, y, w, InitMountainBase(x, y, w), globalMaskMap));
+            int w = UnityEngine.Random.Range(hollowSizeMin, hollowSizeMax);
+            hollows.Add(new Hollow(x, y, w, InitMountainBase(x, y, w)));
+
             int mSize = UnityEngine.Random.Range(1, 2);
             for (int j = 0; j < mSize; j++)
             {
-                int _x = SelectPoint(x, w * 0.5f);
-                int _y = SelectPoint(x, w * 0.5f);
-                int _w = UnityEngine.Random.Range((int)(w * 0.5f), 140);
-                hollows.Add(new Hollow(_x, _y, _w, InitMountainBase(_x, _y, _w), globalMaskMap));
+                int _x = SelectPoint(x, x + (int)(w * 0.5f));
+                int _y = SelectPoint(y, y + (int)(w * 0.5f));
+                int _w = UnityEngine.Random.Range(hollowSizeMin/2, 100);
+                hollows.Add(new Hollow(_x, _y, _w, InitMountainBase(_x, _y, _w)));
             }
         }
         foreach (Hollow e in hollows)
@@ -365,26 +371,34 @@ public class TerrainGenerator : Generator
             e.SetOnField(heights);
         }
     }
-    
 
-    private int SelectPoint(int a, float offset)
+
+    private int SelectPoint(int a, int b)
     {
-        int result = UnityEngine.Random.Range(a, a + (int)offset);
+        int result = UnityEngine.Random.Range(a, b);
         return result >= 0 ? result : 0;
     }
 
-
-    private void SetOnes(float[,] array)
+    private void SetNull(float[,] array)
     {
         for (int i = 0; i < array.GetLength(0); i++)
             for (int j = 0; j < array.GetLength(1); j++)
                 array[i, j] = 0;
     }
-    private void SetNull(float[,] array)
+
+    public void SetMask(float[,] result, float[,] maskM, float[,] maskH)
     {
-        for (int i = 0; i < array.GetLength(0); i++)
-            for (int j = 0; j < array.GetLength(1); j++)
-                array[i, j] = 0f;
+        for (int i = 0; i < result.GetLength(0); i++)
+        {
+            for (int j = 0; j < result.GetLength(1); j++)
+            {
+                if(maskM[i, j] == 1)
+                    result[i, j] = 1;
+
+                if (maskH[i, j] == -1)
+                    result[i, j] = -1;
+            }
+        }
     }
 
     private float[] InitMountainBase(int x, int y, int w)
@@ -430,21 +444,21 @@ public class TerrainGenerator : Generator
         exponent = exp;
     }
 
-    private void Update()
-    {
-        //Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
-        if (Input.GetKey(KeyCode.Y))
-        {
-            SetNull(heights);
-            //Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, heights);
-            Terrain.terrainData = CreateTerrain(Terrain.terrainData);
-        }
-        if (Input.GetKey(KeyCode.U))
-        {
-            Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
-        }
-        //Terrain.terrainData = CreateTerrain(Terrain.terrainData);
-    }
+    //private void Update()
+    //{
+    //    //Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
+    //    if (Input.GetKey(KeyCode.Y))
+    //    {
+    //        SetNull(heights);
+    //        //Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, heights);
+    //        Terrain.terrainData = CreateTerrain(Terrain.terrainData);
+    //    }
+    //    if (Input.GetKey(KeyCode.U))
+    //    {
+    //        Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, heightMap);
+    //    }
+    //    //Terrain.terrainData = CreateTerrain(Terrain.terrainData);
+    //}
 
     /*По координатам карты (для карты)*/
     float[,] CreateHeights()
@@ -453,7 +467,7 @@ public class TerrainGenerator : Generator
         return CreateHeights(width, height, calculated);
     }
 
-    public override float CalculateHeight(int x, int y)
+    public float CalculateHeight(int x, int y)
     {
         float xCoord = (float)x / width * scale + offsetX;
         float yCoord = (float)y / height * scale + offsetY;
@@ -467,7 +481,7 @@ public class TerrainGenerator : Generator
         return _height;
     }
 
-    public override float[,] CreateHeights(int w, int h, Calculated calculate)
+    public float[,] CreateHeights(int w, int h, Calculated calculate)
     {
         float[,] heights = new float[w, h];
         for (int x = 0; x < w; x++)
