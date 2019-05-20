@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-using Assets.Texture;
 public enum groundPattern
 {
     water = 0,
@@ -24,6 +23,7 @@ namespace Assets.Scripts
         public int broadSmall = 100; // 0 - только широколиственные, 100 - только мелколиственные 
 
         private Terrain terrain;
+        private TerrainGenerator terrainGenerator;
         private List<int> smallDeciduous;
         private List<int> broadDeciduous;
         private float[,] heightMap;
@@ -102,6 +102,7 @@ namespace Assets.Scripts
         private List<Ground_Controiler.GroundInfo> prot;
         public void treeStart(TerrainGenerator TG, Ground_Controiler GC, groundPattern pattern = groundPattern.ground)
         {
+            terrainGenerator = TG;
             TreeInfo.maxScale = MAX_TREE_SCALE;
             TreeInfo.minScale = minTreeScale;
             Trees = new List<List<TreeInfo>>();
@@ -127,7 +128,12 @@ namespace Assets.Scripts
                 if (pattern == groundPattern.water)
                 {
                     prot = GC.Water;
-                    GenTree(groundPattern.water);
+                    GenTree();
+                }
+                if (pattern == groundPattern.mountain)
+                {
+                    prot = GC.Mountain;
+                    GenTree();
                 }
             }
         }
@@ -268,7 +274,7 @@ namespace Assets.Scripts
         }
 
 
-        void AddTreeCast(int castIndx, float[,] noise, groundPattern pattern = groundPattern.ground)
+        void AddTreeCast(int castIndx, float[,] noise)
         {
             float cTS = (MAX_TREE_SCALE - minTreeScale) / castCount;
             int reverseCastIndex = castCount - castIndx - 1;
@@ -284,21 +290,6 @@ namespace Assets.Scripts
                     AddOneTree(noise, castParam, pos, castIndx);
                 }
             }
-        }
-
-        void TestFile(float[,] mask)
-        {
-            StreamWriter sf = new StreamWriter(@"E:\Толя проекты\TGen\Assets\WriteText.txt");
-            for (int i = 0; i < mask.GetLength(0); i++)
-            {
-                string text = "";
-                for (int j = 0; j < mask.GetLength(1); j++)
-                {
-                    text += mask[i, j].ToString();
-                }
-                sf.WriteLine(text);
-            }
-            sf.Close();
         }
 
         private void AddOneTree(float[,] noise, Vector2 castParam, Vector2Int pos, int castIndx = 0)
@@ -322,7 +313,8 @@ namespace Assets.Scripts
                 float xD = xNoise * minDist / width;
                 float zD = zNoise * minDist / height;
 
-                if (noise[(int)xNoise, (int)zNoise] > castParam.x && noise[(int)xNoise, (int)zNoise] <= castParam.y)
+                if (noise[(int)xNoise, (int)zNoise] > castParam.x && 
+                    noise[(int)xNoise, (int)zNoise] <= castParam.y)
                 {
                     if (!IsPointInZones(coord, QuestZones))
                     {
@@ -331,7 +323,10 @@ namespace Assets.Scripts
                         if (chanseSeating((int)xNoise * minDist * cTextureOnTerH,(int)zNoise * minDist * cTextureOnTerW,dens))
                         {
                             var position = new Vector3(xD, heightMap[xCoord, pos.y], zD);
-                            var tree = new TreeInfo(position, prototypeIndex, noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE);
+                            var tree = new TreeInfo(
+                                position, 
+                                prototypeIndex, 
+                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise, (int)zNoise,1.8f));
                             Trees[castIndx].Add(tree);
                         }
                     }
@@ -360,9 +355,26 @@ namespace Assets.Scripts
                 {
                     groundDens = 1 - groundDens;
                 }
-                chanse = (int)Math.Round((groundDens * 100 / treeDensity),0);
+                
+
+                chanse = (int)(Math.Round((groundDens * 100 / treeDensity),0) * GetMult(x,z,2.4f));
                 return rn.Next(100) < chanse;
             }
+        }
+
+        float GetMult(int x, int z, float step)
+        {
+            float mult = terrainGenerator.maskWater[x / 2, z / 2] + step - (terrainGenerator.maskWater[x / 2, z / 2] * 2);
+            if (mult < 0 || mult > 2)
+            {
+                mult = 0;
+            }
+
+            if (mult > 1)
+            {
+                mult = 2 - mult;
+            }
+            return mult;
         }
 
         Vector2Int GetPrototypePosition(int x, int z)
@@ -384,14 +396,14 @@ namespace Assets.Scripts
             return protPos;
         }
 
-        void GenTree(groundPattern pattern = groundPattern.ground)
+        void GenTree()
         {
             GenCasts();
             Calculated calculated = new Calculated(CalculateHeight);
             float[,] whiteNoise = CreateHeights(width / minDist, height / minDist, calculated);
             for (int i = 0; i < castCount; i++)
             {
-                AddTreeCast(i, whiteNoise, pattern);
+                AddTreeCast(i, whiteNoise);
                 GenTreesQuestZones(i);
             }
             DrawTreeCast();

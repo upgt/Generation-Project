@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Assets.Texture;
 namespace Assets.Scripts
 {
-    
+
     class ForestGenerator : MonoBehaviour
     {
         public Ground_Controiler textures;
@@ -16,8 +15,8 @@ namespace Assets.Scripts
         {
             tg.StartTG();
             textures.StartGroundControl(tg);
-            tree.treeStart(tg,textures);
-           // roads.StartRoads();
+            tree.treeStart(tg, textures);
+            // roads.StartRoads();
         }
     }
 }
