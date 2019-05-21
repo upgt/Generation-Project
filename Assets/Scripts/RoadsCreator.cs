@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Texture;
 
 [System.Serializable]
 public class Point
@@ -18,7 +19,6 @@ public class Road // дорога - массив точек с координа�
 public class RoadsCreator : MonoBehaviour
 {
     public Ground_Controiler textures;
-    private int roadTextureIndex; //индекс текстуры дороги в инспекторе (отсчёт с нуля слева направо) 
     public int roadWidth = 5; //ширина дороги/2 
     public int roadFlexure = 20; //кривизна дороги 
     public float roadLow = 0.015f; //понижение дороги 
@@ -27,7 +27,7 @@ public class RoadsCreator : MonoBehaviour
     private float tracksLow = 0.0055f;
     public Road[] roads;
     public float[,] treePlaceInfo; //информация о возможности рассадки деревьев, 0 - нельзя
-    private int roadMinLength = 10;
+    private int roadMinLength = 20;
 
     //переменные которые ограничивают крутость дороги, прохождение всквозь горы
     private float tooHighMedium = 0.20f; //насколько сильным может быть перепад высот рядом с дорогой
@@ -36,17 +36,12 @@ public class RoadsCreator : MonoBehaviour
 
     TerrainData terrainData;
 
-    //int coefTexture = terrainData.baseMapResolution / terrainData.heightmapWidth;
-    int coefTexture = 2;
-
-    public float[,] roadMask;
-
+    public float[,] roadMask; //где 1f - там НЕ рисуется дорога, где 0f - рисуется.
+    
     public void MakeRoads(Road[] roads)
     {
         terrainData = GetComponent<Terrain>().terrainData;
-        var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
         var heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
-        var texturesCount = terrainData.splatPrototypes.Length;
         float[,] defaultHeightMap = (float[,])heightMap.Clone();
 
         treePlaceInfo = (float[,])heightMap.Clone();
@@ -56,12 +51,9 @@ public class RoadsCreator : MonoBehaviour
 
         roadMask = (float[,])treePlaceInfo.Clone();
 
-
-        float[,,] everythingMap = (float[,,])alphaMaps.Clone();
-
         int tracksLen = 0; //для непостоянности колеи
 
-        //float[,] groundInfo = textures.terrainGenerator.maskGround;//если меньше 1f, то это земля.
+        float[,] groundInfo = textures.terrainGenerator.maskGround;//если меньше 1f, то это земля.
 
 
         foreach (Road road in roads)
@@ -69,21 +61,6 @@ public class RoadsCreator : MonoBehaviour
             var points = road.points;
             for (var i = 0; i < points.Length - 1; i++)
             {
-                if (points.Length == 1) // если дорога состоит из одной точки
-                {
-                    for (int x = points[0].x - roadWidth; x < points[0].x + roadWidth; x++)
-                        for (int z = points[0].z - roadWidth; z < points[0].x + roadWidth; z++)
-                            for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++)
-                            {
-                                // X альфамапы = Z глобальных координат 
-                                // Y альфамапы = X глобальных координат 
-                                if (textureIndex == roadTextureIndex)
-                                    alphaMaps[z, x, textureIndex] = 1;
-                                else alphaMaps[z, x, textureIndex] = 0;
-                            }
-                    return;
-                }
-
                 int deltaX = Mathf.Abs(points[i].x - points[i + 1].x);
                 int deltaZ = Mathf.Abs(points[i].z - points[i + 1].z);
                 int delta1;
@@ -99,15 +76,24 @@ public class RoadsCreator : MonoBehaviour
                 float rightHeight = 0;
 
                 bool tooHigh = false; // верно, если дорога идёт под крутым углом или слишком крутая по бокам
+                bool roadThrowWater = false; // верно, если дорога идёт всквозь водный участок
                 bool tooShort = false; // верно, если дорога слишком короткая
 
                 Point startPoint = points[i];
 
                 //проверка чтобы отсечь короткие отрезки дороги
-                //if (delta1 < roadMinLength)
-                //continue;
+                if (delta1 < roadMinLength)
+                    continue;
+
+                //корректировка кривизны дороги в зависимости от её длины
+                int actualRoadFlexure = roadFlexure;
+                if (delta1 < 100)
+                    actualRoadFlexure = (int)(roadFlexure * (float)delta1 / 100);
+                if (delta1 < 80)
+                    actualRoadFlexure /= 2;
+
                 //цикл для проверки - будет ли отрезок дороги коротким из-за горы
-                for (int a = 0; a < roadMinLength; a++)// 100 - минимальная длина дороги (не по диагонали, надо переделать)
+                for (int a = 0; a < roadMinLength; a++)
                 {
                     int coord1; // первая координата точки на отрезке между point i и point i+1
                     float currentCoord2; // вторая координата точки учитывая отклонение
@@ -129,7 +115,7 @@ public class RoadsCreator : MonoBehaviour
                             isCoord1X = true;
                             coord1 = a + minX;
                             float deltaCoord2 = deltaZ * ((float)(coord1 - minX) / deltaX); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
-                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minX) / deltaX)) * roadFlexure; // отклонение (изгиб) дороги по синусоиде
+                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minX) / deltaX)) * actualRoadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
                             minZ + deltaCoord2 + flexure :
                             maxZ - deltaCoord2 - flexure;
@@ -145,7 +131,7 @@ public class RoadsCreator : MonoBehaviour
                             isCoord1X = false;
                             coord1 = a + minZ;
                             float deltaCoord2 = deltaX * ((float)(coord1 - minZ) / deltaZ); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
-                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minZ) / deltaZ)) * roadFlexure; // отклонение (изгиб) дороги по синусоиде
+                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minZ) / deltaZ)) * actualRoadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
                             minX + deltaCoord2 + flexure :
                             maxX - deltaCoord2 - flexure;
@@ -171,6 +157,8 @@ public class RoadsCreator : MonoBehaviour
                                         maxHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
                                     if (minHeight == -1f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < minHeight)
                                         minHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
+                                    if (groundInfo[(int)currentCoord2 + k, coord1 + j] == 1f)
+                                        roadThrowWater = true;
                                 }
                                 else
                                 {
@@ -178,6 +166,8 @@ public class RoadsCreator : MonoBehaviour
                                         maxHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
                                     if (minHeight == -1f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < minHeight)
                                         minHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
+                                    if (groundInfo[coord1 + k, (int)currentCoord2 + j] == 1f)
+                                        roadThrowWater = true;
                                 }
                             }
                         if (Mathf.Abs(maxHeight - minHeight) > tooHighMedium)
@@ -208,7 +198,7 @@ public class RoadsCreator : MonoBehaviour
                                 {
                                     centerHeight = mediumRoadHeight;
                                     tooHigh = true;
-                                    //break;
+                                    break;
                                 }
                                 centerHeight = mediumRoadHeight;
                             }
@@ -218,24 +208,24 @@ public class RoadsCreator : MonoBehaviour
                                 if (Mathf.Abs(leftHeight - rightHeight) > tooHighLeftRight)
                                 {
                                     tooHigh = true;
-                                    //break;
+                                    break;
                                 }
                             }
                         }
                     }
 
-                    if (tooHigh)// тут если дорога слишком крутая, она обрывается слишком рано, поэтому она короткая
+                    if (tooHigh || roadThrowWater)// тут если дорога слишком крутая, она обрывается слишком рано, поэтому она короткая
                     {
                         tooShort = true;
-                        //break; // не продолжает дальнейшую проверку
+                        break; // не продолжает дальнейшую проверку
                     }
                 }
 
-                //if (tooShort) //если отрезок дороги короткий, переходим к след. отрезку
-                //continue;
+                if (tooShort) //если отрезок дороги короткий, переходим к след. отрезку
+                    continue;
 
                 //обработка стартовой point
-                MakePoint(startPoint, texturesCount, alphaMaps, heightMap, defaultHeightMap);
+                MakePoint(startPoint, heightMap, defaultHeightMap);
 
                 //цикл отрисовки
                 for (int a = 0; a <= delta1; a++)
@@ -260,7 +250,7 @@ public class RoadsCreator : MonoBehaviour
                             isCoord1X = true;
                             coord1 = a + minX;
                             float deltaCoord2 = deltaZ * ((float)(coord1 - minX) / deltaX); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
-                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minX) / deltaX)) * roadFlexure; // отклонение (изгиб) дороги по синусоиде
+                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minX) / deltaX)) * actualRoadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
                             minZ + deltaCoord2 + flexure :
                             maxZ - deltaCoord2 - flexure;
@@ -270,7 +260,7 @@ public class RoadsCreator : MonoBehaviour
                             isCoord1X = false;
                             coord1 = a + minZ;
                             float deltaCoord2 = deltaX * ((float)(coord1 - minZ) / deltaZ); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
-                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minZ) / deltaZ)) * roadFlexure; // отклонение (изгиб) дороги по синусоиде
+                            float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minZ) / deltaZ)) * actualRoadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
                             minX + deltaCoord2 + flexure :
                             maxX - deltaCoord2 - flexure;
@@ -290,6 +280,8 @@ public class RoadsCreator : MonoBehaviour
                                         maxHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
                                     if (minHeight == -1f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < minHeight)
                                         minHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
+                                    if (groundInfo[(int)currentCoord2 + k, coord1 + j] == 1f)
+                                        roadThrowWater = true;
                                 }
                                 else
                                 {
@@ -297,104 +289,91 @@ public class RoadsCreator : MonoBehaviour
                                         maxHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
                                     if (minHeight == -1f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < minHeight)
                                         minHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
+                                    if (groundInfo[coord1 + k, (int)currentCoord2 + j] == 1f)
+                                        roadThrowWater = true;
                                 }
                             }
                         if (Mathf.Abs(maxHeight - minHeight) > tooHighMedium)
                             tooHigh = true;
                     }
 
-                    /*if (tooHigh)
+                    if (tooHigh || roadThrowWater)
                     {
                         MakePoint(new Point {
                             x = isCoord1X ? coord1 : (int)currentCoord2,
                             z = isCoord1X ? (int)currentCoord2 : coord1}, 
-                            texturesCount, alphaMaps, heightMap, defaultHeightMap);
-                        //break; // не продолжает создание дороги всквозь горы
-                    }*/
+                            heightMap, defaultHeightMap);
+                        break; // не продолжает создание дороги всквозь горы/воду
+                    }
 
                     for (int b = -roadWidth; b < roadWidth; b++)
                     {
                         int coord2 = b + (int)currentCoord2;
-                        // отрисовка дороги 
-                        /*for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++) // цикл по текстурам точки 
-                        {
-                            // X альфамапы = Z глобальных координат 
-                            // Y альфамапы = X глобальных координат 
-                            if (isCoord1X)
-                            {
-                                // разрешение меша 1024, а разрешение альфа текстур 512, 
-
-                                // поэтому берём координату высоты / 2
-                                if (textureIndex == roadTextureIndex)
-                                    alphaMaps[coord2 * coefTexture, coord1 * coefTexture, textureIndex] = 1;
-                                else alphaMaps[coord2 * coefTexture, coord1 * coefTexture, textureIndex] = 0;
-                            }
-                            else
-                            {
-                                if (textureIndex == roadTextureIndex)
-                                    alphaMaps[coord1 * coefTexture, coord2 * coefTexture, textureIndex] = 1;
-                                else alphaMaps[coord1 * coefTexture, coord2 * coefTexture, textureIndex] = 0;
-                            }
-                        }*/
-
                         // сглаживание рельефа дороги 
+                        float mediumRoadHeight = 0;
+                        int n = 0;
+                        for (int j = coord1 - roadWidth * 2; j < coord1 + roadWidth * 2; j++)
+                            for (int k = coord2 - roadWidth * 2; k < coord2 + roadWidth * 2; k++)
+                            {
+                                mediumRoadHeight += (isCoord1X ?
+                                    defaultHeightMap[k, j] :
+                                    defaultHeightMap[j, k]);
+                                n++;
+                            }
+                        mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
+                        if (b == -roadWidth)
+                            leftHeight = mediumRoadHeight;
+                        if (b == 0)
                         {
-                            float mediumRoadHeight = 0;
-                            int n = 0;
-                            for (int j = coord1 - roadWidth * 2; j < coord1 + roadWidth * 2; j++)
-                                for (int k = coord2 - roadWidth * 2; k < coord2 + roadWidth * 2; k++)
-                                {
-                                    mediumRoadHeight += (isCoord1X ?
-                                        defaultHeightMap[k, j] :
-                                        defaultHeightMap[j, k]);
-                                    n++;
-                                }
-                            mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
-                            if (b == -roadWidth)
-                                leftHeight = mediumRoadHeight;
-                            if (b == 0)
+                            if (a != 0 && Mathf.Abs(mediumRoadHeight - centerHeight) > tooHighCenter)
                             {
-                                if (a != 0 && Mathf.Abs(mediumRoadHeight - centerHeight) > tooHighCenter)
-                                {
-                                    centerHeight = mediumRoadHeight;
-                                    tooHigh = true;
-                                    //continue;
-                                }
                                 centerHeight = mediumRoadHeight;
+                                tooHigh = true;
+                                continue;
                             }
-                            if (b == roadWidth - 1)
+                            centerHeight = mediumRoadHeight;
+                        }
+                        if (b == roadWidth - 1)
+                        {
+                            rightHeight = mediumRoadHeight;
+                            if (Mathf.Abs(leftHeight - rightHeight) > tooHighLeftRight)
                             {
-                                rightHeight = mediumRoadHeight;
-                                if (Mathf.Abs(leftHeight - rightHeight) > tooHighLeftRight)
-                                {
-                                    tooHigh = true;
-                                    //continue;
-                                }
+                                tooHigh = true;
+                                continue;
                             }
-                            if (tracks) //если дороги с колеями
-                            {
-                                //по ширине дороги делает изгиб под две колеи
-                                float tracksCurveCoef = 1 - Mathf.Abs(Mathf.Cos((Mathf.PI * b + currentCoord2 - (int)currentCoord2) / roadWidth));
-                                //непостоянность колеи
-                                float tracksSinCoef = Mathf.Abs(Mathf.Sin(Mathf.PI * tracksLen / 50));
-                                mediumRoadHeight -= tracksLow * tracksCurveCoef * tracksSinCoef; //снижение - колеи дорог
-                            }
-                            if (isCoord1X)
-                            {
-                                heightMap[coord2, coord1] = mediumRoadHeight;
-                                treePlaceInfo[coord2, coord1] = 0;
-                                roadMask[coord2, coord1] = 0;
-                            }
-                            else
-                            {
-                                heightMap[coord1, coord2] = mediumRoadHeight;
-                                treePlaceInfo[coord1, coord2] = 0;
-                                roadMask[coord1, coord2] = 0;
-                            }
+                        }
+                        if (tracks) //если дороги с колеями
+                        {
+                            //по ширине дороги делает изгиб под две колеи
+                            float tracksCurveCoef = 1 - Mathf.Abs(Mathf.Cos((Mathf.PI * b + currentCoord2 - (int)currentCoord2) / roadWidth));
+                            //непостоянность колеи
+                            float tracksSinCoef = Mathf.Abs(Mathf.Sin(Mathf.PI * tracksLen / 50));
+                            mediumRoadHeight -= tracksLow * tracksCurveCoef * tracksSinCoef; //снижение - колеи дорог
+                        }
+                        if (isCoord1X)
+                        {
+                            heightMap[coord2, coord1] = mediumRoadHeight;
+                            treePlaceInfo[coord2, coord1] = 0;
+                            roadMask[coord2, coord1] = 0;
+                        }
+                        else
+                        {
+                            heightMap[coord1, coord2] = mediumRoadHeight;
+                            treePlaceInfo[coord1, coord2] = 0;
+                            roadMask[coord1, coord2] = 0;
                         }
                     }
 
-                    //roadMask = (float[,])treePlaceInfo.Clone();
+                    if (tooHigh || roadThrowWater)
+                    {
+                        MakePoint(new Point
+                        {
+                            x = isCoord1X ? coord1 : (int)currentCoord2,
+                            z = isCoord1X ? (int)currentCoord2 : coord1
+                        },
+                            heightMap, defaultHeightMap);
+                        break; // не продолжает создание дороги всквозь горы/воду
+                    }
 
                     // сглаживание рельефа вокруг дороги (ниже) 
                     for (int c = 0; c < roadWidth; c++)
@@ -487,16 +466,15 @@ public class RoadsCreator : MonoBehaviour
                 }
 
                 //обработка конечной point
-                if (true)
+                if (!tooHigh && !tooShort && !roadThrowWater)
                 {
-                    if(startPoint == points[i + 1])
-                        MakePoint(points[i], texturesCount, alphaMaps, heightMap, defaultHeightMap);
-                    else MakePoint(points[i + 1], texturesCount, alphaMaps, heightMap, defaultHeightMap);
+                    if (startPoint == points[i + 1])
+                        MakePoint(points[i], heightMap, defaultHeightMap);
+                    else MakePoint(points[i + 1], heightMap, defaultHeightMap);
                 }
             }
         }
-        //alphaMaps = MixAlphaMaps(alphaMaps, textures.Ground[0], roadTextureIndex, 2);
-        //terrainData.SetAlphamaps(0, 0, alphaMaps);
+        roadMask = MixRoadMask(roadMask, 2);
         terrainData.SetHeights(0, 0, heightMap);
     }
 
@@ -521,57 +499,43 @@ public class RoadsCreator : MonoBehaviour
         return roads;
     }
 
-    public float[,,] MixAlphaMaps(float[,,] roadMap, float currentIndex, int textureMixIndex, int diameterOfMixing)
+    public float[,] MixRoadMask(float[,] roadMask, int diameterOfMixing)
     {
-        // roadMap - карта с нарисованной на ней дорогой (лужей)
-        // everythingMap - карта ДО момента рисования дороги (лужи)
-        // textureMixIndex - индекс текстуры дороги (лужи)
+        // roadMask - Маска с нарисованной на ней дорогой
         // diameterOfMixing - область размером diameterOfMixing x diameterOfMixing вокруг точки будет смешиваться
 
-        float[,,] resultMap = (float[,,])roadMap.Clone();
-        for (var x = 1; x < terrainData.alphamapHeight - 1; x++)
-            for (var z = 1; z < terrainData.alphamapWidth - 1; z++)
+        float[,] resultMask = (float[,])roadMask.Clone();
+        for (var j = 1; j < terrainData.heightmapHeight - 1; j++)
+            for (var k = 1; k < terrainData.heightmapWidth - 1; k++)
             {
-                if (roadMap[z, x, textureMixIndex] == 1f) //если в точке нарисована наша текстура для смешивания
-                    if (
-                        roadMap[z - 1, x, textureMixIndex] < 1f ||
-                        roadMap[z, x - 1, textureMixIndex] < 1f ||
-                        roadMap[z + 1, x, textureMixIndex] < 1f ||
-                        roadMap[z, x + 1, textureMixIndex] < 1f)  //если точка лежит на границе разных текстур
-                    {
-                        int x1 = x - diameterOfMixing / 2;
-                        int z1 = z - diameterOfMixing / 2;
-                        for (var j = 0; j < diameterOfMixing; j++)
-                            for (var k = 0; k < diameterOfMixing; k++)
-                                if (Random.value > 0.5f) //если верно, закрашиваем своей текстурой (дорогой/лужей)
-                                    for (int textureIndex = 0; textureIndex < terrainData.splatPrototypes.Length; textureIndex++)
-                                    {
-                                        if (textureIndex == textureMixIndex)
-                                            resultMap[z1 + k, x1 + j, textureIndex] = 1f;
-                                        else resultMap[z1 + k, x1 + j, textureIndex] = 0f;
-                                    }
-                                else //иначе закрашиваем тем, что было ДО дороги (лужи)
-                                    for (int textureIndex = 0; textureIndex < terrainData.splatPrototypes.Length; textureIndex++)
-                                        resultMap[z1 + k, x1 + j, textureIndex] = currentIndex;
-                    }
+                try
+                {
+                    if (roadMask[k, j] == 0f) //если в точке нарисована наша текстура для смешивания
+                        if (
+                            roadMask[k - 1, j] > 0f ||
+                            roadMask[k, j - 1] > 0f ||
+                            roadMask[k + 1, j] > 0f ||
+                            roadMask[k, j + 1] > 0f)  //если точка лежит на границе разных текстур
+                        {
+                            int x1 = j - diameterOfMixing / 2;
+                            int z1 = k - diameterOfMixing / 2;
+                            for (var a = 0; a < diameterOfMixing; a++)
+                                for (var b = 0; b < diameterOfMixing; b++)
+                                    if (Random.value > 0.5f) //если верно, закрашиваем своей текстурой (дорогой)
+                                        resultMask[z1 + b, x1 + a] = 1f;
+                                    else resultMask[z1 + b, x1 + a] = 0f;
+                        }
+                }
+                catch (System.IndexOutOfRangeException)
+                {
+                    Debug.Log("MixRoadMask System.IndexOutOfRangeException k = " + k.ToString() + "; j = " + j.ToString());
+                }
             }
-        return resultMap;
+        return resultMask;
     }
-
-    private void CleanAlphaMaps(float[,,] alphaMaps, int alphamapWidth, int alphamapHeight, int texturesCount) //очистить альфамапы от текстуры дороги
+    
+    private void MakePoint(Point point, float[,] heightMap, float[,] defaultHeightMap)
     {
-        for (var x = 0; x < alphamapWidth; x++)
-            for (var y = 0; y < alphamapHeight; y++)
-                for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++)
-                    if (textureIndex == 0)
-                        alphaMaps[x, y, textureIndex] = 1f; //закрашиваем всю карту нулевой текстурой (травой)
-                    else alphaMaps[x, y, textureIndex] = 0f;
-    }
-
-    private void MakePoint(Point point, int texturesCount, float[,,] alphaMaps, float[,] heightMap, float[,] defaultHeightMap)
-    {
-        //if (roadMask == null)
-        //roadMask = (float[,])treePlaceInfo.Clone();
         for (int a = -roadWidth * 3; a < roadWidth * 3; a++)
             for (int b = -roadWidth * 3; b < roadWidth * 3; b++)
             {
@@ -585,52 +549,27 @@ public class RoadsCreator : MonoBehaviour
                     {
                         if (len <= 2)
                         {
-                            if (len <= 1)
-                            {
-                                // отрисовка дороги 
-                                for (int textureIndex = 0; textureIndex < texturesCount; textureIndex++) // цикл по текстурам точки 
+                            float mediumRoadHeight = 0;
+                            int n = 0;
+                            for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
+                                for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
                                 {
-                                    // X альфамапы = Z глобальных координат 
-                                    // Y альфамапы = X глобальных координат
-                                    // разрешение меша 1024, а разрешение альфа текстур 512, 
-                                    // поэтому берём координату высоты / 2
-                                    if (textureIndex == roadTextureIndex)
-                                    {
-                                        alphaMaps[z * coefTexture, x * coefTexture, textureIndex] = 1;
-                                        roadMask[z, x] = 0;
-                                    }
-                                    else alphaMaps[z * coefTexture, x * coefTexture, textureIndex] = 0;
+                                    mediumRoadHeight += defaultHeightMap[z, x];
+                                    n++;
                                 }
 
-                                float mediumRoadHeight = 0;
-                                int n = 0;
-                                for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
-                                    for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
-                                    {
-                                        mediumRoadHeight += defaultHeightMap[z, x];
-                                        n++;
-                                    }
+                            if(len <= 1)
+                            {
                                 mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
-
-                                if (mediumRoadHeight < heightMap[z, x])
-                                    heightMap[z, x] = mediumRoadHeight;
+                                roadMask[z, x] = 0;
                             }
                             else
                             {
-                                float mediumRoadHeight = 0;
-                                int n = 0;
-                                for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
-                                    for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
-                                    {
-                                        mediumRoadHeight += defaultHeightMap[z, x];
-                                        n++;
-                                    }
                                 float coef = (1 + Mathf.Cos(Mathf.PI * (len - 1))) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
                                 mediumRoadHeight = mediumRoadHeight / n - roadLow * coef; // итоговая средняя высота, учитывая понижение дороги
-
-                                if (mediumRoadHeight < heightMap[z, x])
-                                    heightMap[z, x] = mediumRoadHeight;
                             }
+                            if (mediumRoadHeight < heightMap[z, x])
+                                heightMap[z, x] = mediumRoadHeight;
                             treePlaceInfo[z, x] = 0f;
                         }
                         else treePlaceInfo[z, x] = 0.5f;
@@ -647,11 +586,10 @@ public class RoadsCreator : MonoBehaviour
     // Start is called before the first frame update 
     public void StartRoads()
     {
-        roadTextureIndex = textures.Road[Random.Range(0, textures.Road.Count - 1)];
         if (randomRoads)
             MakeRoads(GetRandomRoads());
         else MakeRoads(roads);
-       // textures.AddTexture(textures.Road, textures.funk, roadMask);
+        textures.AddTexture(textures.Road, textures.funk, roadMask);
     }
 
     // Update is called once per frame 
