@@ -31,7 +31,7 @@ public class TerrainGenerator : Generator
     // секс закончился
 
 
-    public int depth = 256;
+    public int depth = 20;
     public float[,] heightMap;
     public int height = 256;
     public int width = 256;
@@ -353,11 +353,11 @@ public class TerrainGenerator : Generator
             int w = UnityEngine.Random.Range(50, 140);
             mountains.Add(new Mountain(x, y, w, InitMountainBase(x, y, w)));
             int mSize = UnityEngine.Random.Range(1, 2);
-            for (int j = 0; j < mSize; j++)
+            for (int j = 0; j<mSize; j++)
             {
                 int _x = SelectPoint(x, w * 0.5f);
                 int _y = SelectPoint(x, w * 0.5f);
-                int _w = UnityEngine.Random.Range((int)(w * 0.5f), 140);
+                int _w = UnityEngine.Random.Range((int)(w*0.5f), 140);
                 mountains.Add(new Mountain(_x, _y, _w, InitMountainBase(_x, _y, _w)));
             }
         }
@@ -372,23 +372,23 @@ public class TerrainGenerator : Generator
             int x = UnityEngine.Random.Range(0, width - 50);
             int y = UnityEngine.Random.Range(0, width - 50);
             int w = UnityEngine.Random.Range(50, 140);
-            hollows.Add(new Hollow(x, y, w, InitMountainBase(x, y, w)));
+            hollows.Add(new Hollow(x, y, w, InitMountainBase(x, y, w), globalMaskMap));
             int mSize = UnityEngine.Random.Range(1, 2);
             for (int j = 0; j < mSize; j++)
             {
                 int _x = SelectPoint(x, w * 0.5f);
                 int _y = SelectPoint(x, w * 0.5f);
                 int _w = UnityEngine.Random.Range((int)(w * 0.5f), 140);
-                hollows.Add(new Hollow(_x, _y, _w, InitMountainBase(_x, _y, _w)));
+                hollows.Add(new Hollow(_x, _y, _w, InitMountainBase(_x, _y, _w), globalMaskMap));
             }
         }
         foreach (Hollow e in hollows)
         {
             e.SetMask(globalMaskMap);
-            e.SetOnField(field);
+            e.SetOnField(heights);
         }
     }
-
+    
 
     private int SelectPoint(int a, float offset)
     {

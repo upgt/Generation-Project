@@ -15,7 +15,7 @@ namespace Assets.Scripts
         {
             tg.StartTG();
             textures.StartGroundControl(tg);
-           // tree.treeStart(tg, textures);
+            tree.treeStart(tg, textures);
             // roads.StartRoads();
         }
     }
