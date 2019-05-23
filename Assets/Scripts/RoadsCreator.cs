@@ -26,20 +26,24 @@ public class RoadsCreator : MonoBehaviour
     private float tracksLow = 0.0055f;
     public Road[] roads;
     public float[,] treePlaceInfo; //информация о возможности рассадки деревьев, 0 - нельзя
-    private int roadMinLength = 20;
-
+    private int roadMinLength = 5;
+    Deleg func;
     //переменные которые ограничивают крутость дороги, прохождение всквозь горы
-    private float tooHighMedium = 0.20f; //насколько сильным может быть перепад высот рядом с дорогой
-    private float tooHighCenter = 0.0055f; //насколько дорога может меняться по высоте вдоль центральной линии
-    private float tooHighLeftRight = 0.019f; //насколько сильно может отличаться высота левого и бравого бока дороги
+    private float tooHighMedium = 10000000f; //насколько сильным может быть перепад высот рядом с дорогой
+    private float tooHighCenter = 10000000f; //насколько дорога может меняться по высоте вдоль центральной линии
+    private float tooHighLeftRight = 100000000f; //насколько сильно может отличаться высота левого и бравого бока дороги
 
     TerrainData terrainData;
 
     public float[,] roadMask; //где 1f - там НЕ рисуется дорога, где 0f - рисуется.
-    
+    bool CheckEqual(float f1, float f2)
+    {
+        return f1 == f2;
+    }
     public void MakeRoads(Road[] roads)
     {
         terrainData = GetComponent<Terrain>().terrainData;
+        func = new Deleg(CheckEqual);
         var heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         float[,] defaultHeightMap = (float[,])heightMap.Clone();
 
@@ -52,8 +56,9 @@ public class RoadsCreator : MonoBehaviour
 
         int tracksLen = 0; //для непостоянности колеи
 
-        float[,] groundInfo = textures.terrainGenerator.maskGround;//если меньше 1f, то это земля.
-
+        float[,] groundInfo = textures.terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
+        groundInfo = TerrainGenerator.CreateMask(groundInfo, 0, func);
+        TerrainGenerator.TestFile(groundInfo);
 
         foreach (Road road in roads)
         {
@@ -197,6 +202,7 @@ public class RoadsCreator : MonoBehaviour
                                 {
                                     centerHeight = mediumRoadHeight;
                                     tooHigh = true;
+                                    Debug.Log("shit");
                                     break;
                                 }
                                 centerHeight = mediumRoadHeight;
@@ -207,6 +213,7 @@ public class RoadsCreator : MonoBehaviour
                                 if (Mathf.Abs(leftHeight - rightHeight) > tooHighLeftRight)
                                 {
                                     tooHigh = true;
+                                    Debug.Log("mocha");
                                     break;
                                 }
                             }
@@ -216,6 +223,7 @@ public class RoadsCreator : MonoBehaviour
                     if (tooHigh || roadThrowWater)// тут если дорога слишком крутая, она обрывается слишком рано, поэтому она короткая
                     {
                         tooShort = true;
+                        Debug.Log("idiDomoi");
                         break; // не продолжает дальнейшую проверку
                     }
                 }
@@ -298,9 +306,11 @@ public class RoadsCreator : MonoBehaviour
 
                     if (tooHigh || roadThrowWater)
                     {
-                        MakePoint(new Point {
+                        MakePoint(new Point
+                        {
                             x = isCoord1X ? coord1 : (int)currentCoord2,
-                            z = isCoord1X ? (int)currentCoord2 : coord1}, 
+                            z = isCoord1X ? (int)currentCoord2 : coord1
+                        },
                             heightMap, defaultHeightMap);
                         break; // не продолжает создание дороги всквозь горы/воду
                     }
@@ -532,7 +542,7 @@ public class RoadsCreator : MonoBehaviour
             }
         return resultMask;
     }
-    
+
     private void MakePoint(Point point, float[,] heightMap, float[,] defaultHeightMap)
     {
         for (int a = -roadWidth * 3; a < roadWidth * 3; a++)
@@ -557,7 +567,7 @@ public class RoadsCreator : MonoBehaviour
                                     n++;
                                 }
 
-                            if(len <= 1)
+                            if (len <= 1)
                             {
                                 mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
                                 roadMask[z, x] = 0;
@@ -588,7 +598,7 @@ public class RoadsCreator : MonoBehaviour
         if (randomRoads)
             MakeRoads(GetRandomRoads());
         else MakeRoads(roads);
-        textures.AddTexture(textures.Road, textures.funk, 2);
+        textures.AddTexture(textures.Road, textures.funk, roadMask);
     }
 
     // Update is called once per frame 

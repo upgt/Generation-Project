@@ -133,7 +133,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!154 &341229294
 TerrainCollider:
@@ -221,7 +221,7 @@ MonoBehaviour:
       type: 2}
     density: 0.3
     protorype: 0
-  preDomTextGraund: 0.21
+  preDomTextGraund: 0.5
   Water:
   - graund: {fileID: 8574412962073106934, guid: 5b5d81490f8456f469b824080dc709bb,
       type: 2}
@@ -240,11 +240,8 @@ MonoBehaviour:
       type: 2}
     density: 0
     protorype: 0
-  - graund: {fileID: 0}
-    density: 0
-    protorype: 0
   Road:
-  - graund: {fileID: 8574412962073106934, guid: ed4913ded7820c6489a7064c1e37b471,
+  - graund: {fileID: 8574412962073106934, guid: c8b6a1828611209459ddc909945e95e0,
       type: 2}
     density: 0
     protorype: 0
@@ -262,13 +259,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   smothAngle: 1
-  depth: 71
+  depth: 158
   height: 256
   width: 256
   grain: 8
   r: 0.97
-  mountainsNumber: 3
-  hollowsNumber: 2
+  mountainsNumber: 2
+  hollowsNumber: 1
 --- !u!114 &341229299
 MonoBehaviour:
   m_ObjectHideFlags: 0

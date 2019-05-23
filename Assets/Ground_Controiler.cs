@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts;
@@ -136,12 +136,68 @@ public class Ground_Controiler : MonoBehaviour
                 {
                     alphaMaps[x, z, texPrototypes[protIndx]] = alpha * mult;
                     alphaMaps[x, z, texPrototypes[protIndxTwo]] = (1 - alpha) * mult;
+                    Normalize(alphaMaps, x, z);
                 }
             }
         }
         TestFile(alphaMaps, texPrototypes[protIndx], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndx].protorype.ToString() + ".txt");
         TestFile(alphaMaps, texPrototypes[protIndxTwo], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndxTwo].protorype.ToString() +".txt");
         terrainData.SetAlphamaps(0, 0, alphaMaps);
+    }
+
+    public void AddTexture(List<GroundInfo> texPrototypes, Calculated funk, float[,] mask)
+    {
+        float alpha;
+        var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
+        heights = TreeGenerate.CreateHeights(alphaMaps.GetLength(0), alphaMaps.GetLength(1), funk);
+        int prot = rn.Next(texPrototypes.Count - 1);
+        int protTwo = GetNotRepeatRandParam(texPrototypes.Count - 1, prot);
+
+        for (int x = 0; x < alphaMaps.GetLength(0); x++)
+        {
+            for (int z = 0; z < alphaMaps.GetLength(1); z++)
+            {
+                // X альфамапы = Z глобальных координат
+                // Y альфамапы = X глобальных координат
+                float diffuseX = x * mask.GetLength(0) / alphaMaps.GetLength(0);
+                float diffuseZ = z * mask.GetLength(1) / alphaMaps.GetLength(1);
+                int difX = (int)Math.Round(diffuseX, 0);
+                int difZ = (int)Math.Round(diffuseZ, 0);
+                if (mask[difX, difZ] != 1)
+                {
+                    alpha = heights[x, z] * preDomTextGraund;
+                    if (texPrototypes.Count == 1)
+                    {
+                        alphaMaps[x, z, texPrototypes[prot]] = 1;
+                        zeroAnother(alphaMaps, texPrototypes[prot], texPrototypes[prot], x, z);
+                    }
+                    else
+                    {
+                        alphaMaps[x, z, texPrototypes[prot]] = alpha;
+                        alphaMaps[x, z, texPrototypes[protTwo]] = 1 - alpha;
+                        zeroAnother(alphaMaps, texPrototypes[prot], texPrototypes[protTwo], x, z);
+                    }
+                    
+                }
+            }
+        }
+        terrainData.SetAlphamaps(0, 0, alphaMaps);
+    }
+
+    private static void Normalize(float[,,] alphaMaps, int x, int z)
+    {
+        float sum = 0;
+        for (int i = 0; i < alphaMaps.GetLength(2); i++)
+        {
+            if (sum + alphaMaps[x, z, i] <= 1)
+            {
+                sum += alphaMaps[x, z, i];
+            }
+            else
+            {
+                alphaMaps[x, z, i] = 1 - sum;
+            }
+        }
     }
 
     void TestFile(float[,,] mask, int ma, string path)

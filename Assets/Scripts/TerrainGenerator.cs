@@ -5,7 +5,7 @@ using Assets.Scripts;
 using System.IO;
 using Application;
 
-delegate bool Deleg(float f1, float f2);
+public delegate bool Deleg(float f1, float f2);
 
 public abstract class Generator : MonoBehaviour
 {
@@ -22,7 +22,7 @@ public class TerrainGenerator : Generator
     private List<float> maskCollect;
     public int smothAngle = 1; // пляжный спад или резкий обрыв на воде 
     public float[,] maskWMap;
-    float[,] globalMaskMap;
+    public float[,] globalMaskMap;
     float groundRelief = 0.8f; // Холмистость рельефа земли
 
     public float[,] maskWater;
@@ -144,12 +144,12 @@ public class TerrainGenerator : Generator
         return maskTerrain;
     }
 
-    float[,] CreateMask(float[,] mask, float waterParam, Deleg func)
+    public static float[,] CreateMask(float[,] mask, float waterParam, Deleg func)
     {
-        float[,] result = new float[width, height];
-        for (int i = 0; i < width; i++)
+        float[,] result = new float[mask.GetLength(0), mask.GetLength(1)];
+        for (int i = 0; i < mask.GetLength(0); i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < mask.GetLength(1); j++)
             {
                 if (func(mask[i, j] ,waterParam))
                 {
@@ -328,7 +328,7 @@ public class TerrainGenerator : Generator
         return terrainData;
     }
 
-    void TestFile(float[,] mask)
+    public static void TestFile(float[,] mask)
     {
         StreamWriter sf = new StreamWriter(@"E:\Толя проекты\TGen\Assets\WriteText.txt");
         for (int i = 0; i < mask.GetLength(0); i++)
