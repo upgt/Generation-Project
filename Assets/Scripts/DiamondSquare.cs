@@ -32,7 +32,7 @@ public class DiamondSquare
     float DisplaceField(float num)
     {
         float max = num / WH * GRAIN * 0.15f;
-        return UnityEngine.Random.Range(-0.5f, 0.5f) * max;
+        return UnityEngine.Random.Range(-0.3f, 0.3f) * max;
     }
     // Считаем рандомный коэффициент смещения для высоты
     float Displace(float num)

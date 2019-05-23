@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Assets.Texture;
 
 [System.Serializable]
 public class Point
@@ -589,7 +588,7 @@ public class RoadsCreator : MonoBehaviour
         if (randomRoads)
             MakeRoads(GetRandomRoads());
         else MakeRoads(roads);
-        textures.AddTexture(textures.Road, textures.funk, roadMask);
+        textures.AddTexture(textures.Road, textures.funk, 2);
     }
 
     // Update is called once per frame 
