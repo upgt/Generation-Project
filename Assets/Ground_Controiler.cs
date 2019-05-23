@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts;
-
+using System.IO;
 
 public class Ground_Controiler : MonoBehaviour
 {
@@ -78,6 +78,7 @@ public class Ground_Controiler : MonoBehaviour
         funk = new Calculated(CalculateHeight);
         terrain = GetComponent<Terrain>();
         terrainData = terrain.terrainData;
+        ZeroingAlpha();
         AddTexture(Ground, funk, 2);
         AddTexture(Water, funk, 1);
         AddTexture(Mountain, funk, 3);
@@ -102,6 +103,9 @@ public class Ground_Controiler : MonoBehaviour
         heights = TreeGenerate.CreateHeights(alphaMaps.GetLength(0), alphaMaps.GetLength(1), funk);
         int protIndx = rn.Next(texPrototypes.Count - 1);
         int protIndxTwo = GetNotRepeatRandParam(protIndx, texPrototypes.Count - 1);
+        float multX = (float)mask.GetLength(0) / alphaMaps.GetLength(0);
+        float multZ = (float)mask.GetLength(1) / alphaMaps.GetLength(1);
+        int X, Z;
 
         for (int x = 0; x < alphaMaps.GetLength(0); x++)
         {
@@ -109,7 +113,9 @@ public class Ground_Controiler : MonoBehaviour
             {
                 // X альфамапы = Z глобальных координат
                 // Y альфамапы = X глобальных координат
-                float mult = mask[x / 2, z / 2] + step - (mask[x / 2, z / 2] * 3);
+                X = (int)(x * multX);
+                Z = (int)(z * multZ);
+                float mult = mask[X, Z] + step - (mask[X, Z] * 3);
 
                 if (mult < 0 || mult > 2)
                 {
@@ -122,7 +128,7 @@ public class Ground_Controiler : MonoBehaviour
                 }
 
                 alpha = heights[x, z] * preDomTextGraund;
-                if(protIndx == protIndxTwo)
+                if (protIndx == protIndxTwo)
                 {
                     alphaMaps[x, z, texPrototypes[protIndx]] = mult;
                 }
@@ -133,13 +139,45 @@ public class Ground_Controiler : MonoBehaviour
                 }
             }
         }
+        TestFile(alphaMaps, texPrototypes[protIndx], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndx].protorype.ToString() + ".txt");
+        TestFile(alphaMaps, texPrototypes[protIndxTwo], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndxTwo].protorype.ToString() +".txt");
         terrainData.SetAlphamaps(0, 0, alphaMaps);
+    }
+
+    void TestFile(float[,,] mask, int ma, string path)
+    {
+        StreamWriter sf = new StreamWriter(path);
+        for (int i = 0; i < mask.GetLength(0); i++)
+        {
+            string text = "";
+            for (int j = 0; j < mask.GetLength(1); j++)
+            {
+                text += mask[i, j,ma].ToString() + '\t' + '\t' + '\t';
+            }
+            sf.WriteLine(text);
+        }
+        sf.Close();
+    }
+
+    private void ZeroingAlpha()
+    {
+        var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
+        for (int x = 0; x < alphaMaps.GetLength(0); x++)
+        {
+            for (int z = 0; z < alphaMaps.GetLength(1); z++)
+            {
+                for (int i = 0; i < alphaMaps.GetLength(2); i++)
+                {
+                    alphaMaps[x, z, i] = 0;
+                }
+            }
+        }
     }
 
     int GetNotRepeatRandParam(int repeatParam, int max)
     {
         int result = rn.Next(max);
-        if(result == repeatParam)
+        if (result == repeatParam)
         {
             result++;
         }
