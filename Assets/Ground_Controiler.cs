@@ -140,13 +140,14 @@ public class Ground_Controiler : MonoBehaviour
                 }
             }
         }
-        TestFile(alphaMaps, texPrototypes[protIndx], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndx].protorype.ToString() + ".txt");
-        TestFile(alphaMaps, texPrototypes[protIndxTwo], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndxTwo].protorype.ToString() +".txt");
+        //TestFile(alphaMaps, texPrototypes[protIndx], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndx].protorype.ToString() + ".txt");
+        //TestFile(alphaMaps, texPrototypes[protIndxTwo], @"E:\Толя проекты\TGen\Assets\WriteAlpha" + texPrototypes[protIndxTwo].protorype.ToString() +".txt");
         terrainData.SetAlphamaps(0, 0, alphaMaps);
     }
 
     public void AddTexture(List<GroundInfo> texPrototypes, Calculated funk, float[,] mask)
     {
+        TestLayer(texPrototypes);
         float alpha;
         var alphaMaps = terrainData.GetAlphamaps(0, 0, terrainData.alphamapWidth, terrainData.alphamapHeight);
         heights = TreeGenerate.CreateHeights(alphaMaps.GetLength(0), alphaMaps.GetLength(1), funk);

@@ -323,12 +323,12 @@ public class TerrainGenerator : Generator
         LevelMap(globalMaskMap);
 
         maskWater = InterpolatedMask(heights);
-        TestFile(maskWater);
+        //TestFile(maskWater);
         terrainData.SetHeights((int)xTerrain, (int)zTerrain, heights);
         return terrainData;
     }
 
-    public static void TestFile(float[,] mask)
+    /*public static void TestFile(float[,] mask)
     {
         StreamWriter sf = new StreamWriter(@"E:\Толя проекты\TGen\Assets\WriteText.txt");
         for (int i = 0; i < mask.GetLength(0); i++)
@@ -341,7 +341,7 @@ public class TerrainGenerator : Generator
             sf.WriteLine(text);
         }
         sf.Close();
-    }
+    }*/
 
     private void RandomField(float[,] field)
     {
