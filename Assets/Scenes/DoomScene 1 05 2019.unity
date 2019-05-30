@@ -215,21 +215,21 @@ MonoBehaviour:
     protorype: 0
   - graund: {fileID: 8574412962073106934, guid: 210b270d68af0234aab460145f1852d5,
       type: 2}
-    density: 0.7
+    density: 0.5
     protorype: 0
   - graund: {fileID: 8574412962073106934, guid: e73a76c9858d74e4e921adfd05328457,
       type: 2}
-    density: 0.3
+    density: 0.5
     protorype: 0
-  preDomTextGraund: 0.5
+  preDomTextGraund: 0.25
   Water:
   - graund: {fileID: 8574412962073106934, guid: 5b5d81490f8456f469b824080dc709bb,
       type: 2}
-    density: 0
+    density: 0.5
     protorype: 0
   - graund: {fileID: 8574412962073106934, guid: 0b3c687384769da4398525f32e504e90,
       type: 2}
-    density: 0
+    density: 0.5
     protorype: 0
   Mountain:
   - graund: {fileID: 8574412962073106934, guid: 7234753ef3663fc408193769207e7e08,
@@ -265,7 +265,7 @@ MonoBehaviour:
   grain: 8
   r: 0.97
   mountainsNumber: 2
-  hollowsNumber: 1
+  hollowsNumber: 2
 --- !u!114 &341229299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -295,9 +295,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minTreeScale: 0.3
-  maxDist: 12
-  minDist: 9
-  Casts: 3
+  maxDist: 8
+  minDist: 4
+  Casts: 2
   hMap: {fileID: 341229298}
   broadSmall: 22
   QuestZones: []
@@ -1302,7 +1302,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1541626258}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 128, y: 18.2, z: 128}
+  m_LocalPosition: {x: 128, y: 81.6, z: 128}
   m_LocalScale: {x: 19200, y: 19200, z: 19200}
   m_Children:
   - {fileID: 1737691555}
