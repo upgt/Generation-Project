@@ -229,7 +229,6 @@ public class Ground_Controiler : MonoBehaviour
                 }
             }
         }
-        terrainData.SetAlphamaps(0, 0, alphaMaps);
     }
 
     int GetNotRepeatRandParam(int repeatParam, int max)
