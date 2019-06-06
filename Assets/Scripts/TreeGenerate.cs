@@ -343,7 +343,7 @@ namespace Assets.Scripts
                             var tree = new TreeInfo(
                                 position, 
                                 prototypeIndex, 
-                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise , (int)zNoise,1.9f) * rc.treePlaceInfo[(int)xNoise, (int)zNoise]);
+                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise , (int)zNoise,1.8f) * rc.treePlaceInfo[(int)xNoise, (int)zNoise]);
                             Trees[castIndx].Add(tree);
                         }
                     }
