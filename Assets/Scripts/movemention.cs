@@ -5,6 +5,7 @@ using UnityEngine;
 public class movemention : MonoBehaviour
 {
     public int speedRotation = 1;
+    public float speed = 1f;
     public GameObject player;
     public Terrain terrain;
     public CharacterController characterController;
@@ -21,22 +22,22 @@ public class movemention : MonoBehaviour
         position = new Vector3(0, 0, 0);
         if (Input.GetKey(KeyCode.W))
         {
-            position = transform.forward;
+            position = transform.forward*speed;
         }
 
         if (Input.GetKey(KeyCode.D))
         {
-            position = transform.right;
+            position = transform.right * speed;
         }
 
         if (Input.GetKey(KeyCode.S))
         {
-            position = -transform.forward;
+            position = -transform.forward * speed;
         }
 
         if (Input.GetKey(KeyCode.A))
         {
-            position = -transform.right;
+            position = -transform.right * speed;
         }
 
         if((transform.position.x + position.x) >= terrain.terrainData.size.x || (transform.position.x + position.x) <= 0)
