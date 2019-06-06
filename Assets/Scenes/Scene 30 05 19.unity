@@ -123,8 +123,8 @@ GameObject:
   - component: {fileID: 341229296}
   - component: {fileID: 341229295}
   - component: {fileID: 341229294}
-  - component: {fileID: 341229297}
   - component: {fileID: 341229298}
+  - component: {fileID: 341229297}
   - component: {fileID: 341229300}
   - component: {fileID: 341229299}
   - component: {fileID: 341229301}
@@ -190,7 +190,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 341229293}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 30, z: 0}
+  m_LocalPosition: {x: 231, y: 46.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -259,13 +259,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   smothAngle: 1
-  depth: 158
-  height: 256
-  width: 256
-  grain: 8
-  r: 0.97
+  size: 1024
+  grain: 18.84
+  r: 0.3
   mountainsNumber: 3
-  hollowsNumber: 2
+  hollowsNumber: 5
 --- !u!114 &341229299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -297,7 +295,7 @@ MonoBehaviour:
   minTreeScale: 0.3
   maxDist: 10
   minDist: 6
-  Casts: 2
+  Casts: 0
   hMap: {fileID: 341229298}
   broadSmall: 22
   QuestZones: []
@@ -1381,7 +1379,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1541626259
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -30,11 +30,9 @@ public class TerrainGenerator : Generator
 
     // секс закончился
 
-
-    public int depth = 256;
+    
     public float[,] heightMap;
-    public int height = 256;
-    public int width = 256;
+    public int size = 256;
 
     private float scale;
     private float offsetX;
@@ -54,10 +52,6 @@ public class TerrainGenerator : Generator
 
     public int hollowsNumber;
     private List<Hollow> hollows = new List<Hollow>();
-    //массив нулей и единиц
-    public int[,] mountainsNulliki;
-
-
     //__________________________________________________________//
 
     private float xTerrain = 0;
@@ -65,7 +59,7 @@ public class TerrainGenerator : Generator
 
     public static implicit operator float[,] (TerrainGenerator t)
     {
-        return t.heightMap;
+        return t.heights;
     }
 
     public void StartTG()
@@ -81,7 +75,7 @@ public class TerrainGenerator : Generator
         // Работает только тогда когда в массиве деревьев есть хотя бы одно деревоVector3 position = new Vector3(xTerrain, 0, zTerrain);                     
         if (Terrain.terrainData.treePrototypes.Length > 0)
         {
-            Vector3 positionEnd = new Vector3(width + xTerrain, 0, height + zTerrain);
+            Vector3 positionEnd = new Vector3(size + xTerrain, 0, size + zTerrain);
         }
     }
 
@@ -90,9 +84,9 @@ public class TerrainGenerator : Generator
     private float GetMaxParam(float[,] mask)
     {
         float result = 0;
-        for (int i = 0; i < width; i++)
+        for (int i = 0; i < size; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < size; j++)
             {
                 result = Mathf.Max(mask[i, j], result);
             }
@@ -103,9 +97,9 @@ public class TerrainGenerator : Generator
     private float GetMinParam(float[,] mask)
     {
         float result = 1;
-        for (int i = 0; i < width; i++)
+        for (int i = 0; i < size; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < size; j++)
             {
                 result = Mathf.Min(mask[i, j], result);
             }
@@ -115,13 +109,13 @@ public class TerrainGenerator : Generator
 
     private float[,] InterpolatedMask(float[,] mask)
     {
-        float[,] maskTerrain = new float[width, height];
+        float[,] maskTerrain = new float[size, size];
         float minParam = GetMinParam(mask);
         float maxParam = GetMaxParam(mask) - minParam;
         float param;
-        for (int i = 0; i < width; i++)
+        for (int i = 0; i < size; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < size; j++)
             {
                 param = (mask[i, j] - minParam) / maxParam;
                 maskTerrain[i, j] = (float)Math.Round(param, 3);
@@ -185,9 +179,9 @@ public class TerrainGenerator : Generator
             downCoef = 1;
         }
 
-        for (int i = 1; i < width - 1; i++)
+        for (int i = 1; i < size - 1; i++)
         {
-            for (int j = 1; j < height - 1; j++)
+            for (int j = 1; j < size - 1; j++)
             {
                 if (mask[i, j] == downCoef)
                 {
@@ -218,9 +212,9 @@ public class TerrainGenerator : Generator
     float[,] MergerMask(float[,] map, float[,] mask, float param)
     {
         float[,] result = map;
-        for (int i = 1; i < width - 1; i++)
+        for (int i = 1; i < size - 1; i++)
         {
-            for (int j = 1; j < height - 1; j++)
+            for (int j = 1; j < size - 1; j++)
             {
                 if (mask[i, j] != 1)
                 {
@@ -248,9 +242,9 @@ public class TerrainGenerator : Generator
     void LevelMap(float[,] map)
     {
         levelMap = new List<float>();
-        for (int i = 1; i < width - 1; i++)
+        for (int i = 1; i < size - 1; i++)
         {
-            for (int j = 1; j < height - 1; j++)
+            for (int j = 1; j < size - 1; j++)
             {
                 if (IsUnique(map[i, j], levelMap))
                 {
@@ -280,43 +274,16 @@ public class TerrainGenerator : Generator
     {
         Deleg func = new Deleg(CheckEqual);
         // делаем секс
-        terrainData.heightmapResolution = width + 1;
-        terrainData.size = new Vector3(width, depth, height);
+        terrainData.heightmapResolution = size + 1;
+        terrainData.size = new Vector3(size, size, size);
 
         SetDefaultNoiseCoefs(1);
         SetTerrainValues(2, 0.03f, 3.3f);
 
-        //globalMaskMap = CreateHeights();
-
-        //globalMaskMap = InterpolatedMask(globalMaskMap);
-
-
-
-        //maskWMap = CreateMask(globalMaskMap, levelMap[0], func); // создать маску по уровню
-        //for (int i = 0; i < 90 / smothAngle; i++)
-        //{
-        //    maskWMap = SmoothZone(maskWMap, i * smothAngle);
-        //}
-        //maskWater = maskWMap;
-        //globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1]);
-
-        //// делаем землю
-        //maskWMap = CreateMask(globalMaskMap, levelMap[1], func);
-
-        //SetTerrainValues(4, 0.7f, 1.5f);
-
-        //heightMap = CreateHeights();
-        //maskWMap = MergerMask(heightMap, maskWMap, 1);
-        //maskGround = maskWMap;
-        //globalMaskMap = MergerMask(globalMaskMap, maskWMap, levelMap[1] * groundRelief);
-        //// конец сексу
-
-
-
         //создаем равнину
-        DiamondSquare diamondSquare = new DiamondSquare(width, height, grain, r, false);
-        heights = diamondSquare.DrawPlasma(width, height);
-        globalMaskMap = new float[width, height];
+        DiamondSquare diamondSquare = new DiamondSquare(size, size, grain, r, false);
+        heights = diamondSquare.DrawPlasma(size, size);
+        globalMaskMap = new float[size, size];
         SetOnes(globalMaskMap);
 
         RandomField(heights);
@@ -345,19 +312,17 @@ public class TerrainGenerator : Generator
 
     private void RandomField(float[,] field)
     {
-        //располагаем горы на карте
         for (int i = 0; i < mountainsNumber; i++)
         {
-            int x = UnityEngine.Random.Range(0, width - 50);
-            int y = UnityEngine.Random.Range(0, width - 50);
-            int w = UnityEngine.Random.Range(50, 140);
+            int w = UnityEngine.Random.Range(size / 4, size / 2);
+            int x = UnityEngine.Random.Range(0, size - w);
+            int y = UnityEngine.Random.Range(0, size - w);
             mountains.Add(new Mountain(x, y, w, InitMountainBase(x, y, w)));
-            int mSize = UnityEngine.Random.Range(1, 2);
-            for (int j = 0; j < mSize; j++)
+            for (int j = 0; j < 3; j++)
             {
                 int _x = SelectPoint(x, w * 0.5f);
-                int _y = SelectPoint(x, w * 0.5f);
-                int _w = UnityEngine.Random.Range((int)(w * 0.5f), 140);
+                int _y = SelectPoint(y, w * 0.5f);
+                int _w = UnityEngine.Random.Range((int)(w * 0.3f), (int)(w * 0.5f));
                 mountains.Add(new Mountain(_x, _y, _w, InitMountainBase(_x, _y, _w)));
             }
         }
@@ -369,16 +334,15 @@ public class TerrainGenerator : Generator
 
         for (int i = 0; i < hollowsNumber; i++)
         {
-            int x = UnityEngine.Random.Range(0, width - 50);
-            int y = UnityEngine.Random.Range(0, width - 50);
-            int w = UnityEngine.Random.Range(50, 140);
+            int w = UnityEngine.Random.Range(size / 4, size / 2);
+            int x = UnityEngine.Random.Range(0, size - w);
+            int y = UnityEngine.Random.Range(0, size - w);
             hollows.Add(new Hollow(x, y, w, InitMountainBase(x, y, w)));
-            int mSize = UnityEngine.Random.Range(1, 2);
-            for (int j = 0; j < mSize; j++)
+            for (int j = 0; j < 2; j++)
             {
                 int _x = SelectPoint(x, w * 0.5f);
-                int _y = SelectPoint(x, w * 0.5f);
-                int _w = UnityEngine.Random.Range((int)(w * 0.5f), 140);
+                int _y = SelectPoint(y, w * 0.5f);
+                int _w = UnityEngine.Random.Range((int)(w * 0.5f), w);
                 hollows.Add(new Hollow(_x, _y, _w, InitMountainBase(_x, _y, _w)));
             }
         }
@@ -414,9 +378,6 @@ public class TerrainGenerator : Generator
     {
         float[] mBase = new float[4];
 
-        if (x < -w / 2 || x > heights.GetLength(0) || y < -w / 2 || y > heights.GetLength(1))
-            throw new Exception();
-
         if (PointInField(x, y))
             mBase[3] = heights[x, y];
         else
@@ -425,17 +386,17 @@ public class TerrainGenerator : Generator
         if (PointInField(x + w, y))
             mBase[2] = heights[x + w, y];
         else
-            mBase[2] = heights[width - 1, 0];
+            mBase[2] = heights[size - 1, 0];
 
         if (PointInField(x, y + w))
             mBase[1] = heights[x, y + w];
         else
-            mBase[1] = heights[0, height - 1];
+            mBase[1] = heights[0, size - 1];
 
         if (PointInField(x + w, y + w))
             mBase[0] = heights[x + w, y + w];
         else
-            mBase[0] = heights[width - 1, height - 1];
+            mBase[0] = heights[size - 1, size - 1];
 
         return mBase;
     }
@@ -456,7 +417,6 @@ public class TerrainGenerator : Generator
     private void Update()
     {
         //Terrain.terrainData.SetHeights((int)xTerrain, (int)zTerrain, globalMaskMap/*heightMap*/);
-       
         //Terrain.terrainData = CreateTerrain(Terrain.terrainData);
     }
 
@@ -464,13 +424,13 @@ public class TerrainGenerator : Generator
     float[,] CreateHeights()
     {
         Calculated calculated = new Calculated(CalculateHeight);
-        return CreateHeights(width, height, calculated);
+        return CreateHeights(size, size, calculated);
     }
 
     public override float CalculateHeight(int x, int y)
     {
-        float xCoord = (float)x / width * scale + offsetX;
-        float yCoord = (float)y / height * scale + offsetY;
+        float xCoord = (float)x / size * scale + offsetX;
+        float yCoord = (float)y / size * scale + offsetY;
 
         var _height = (Mathf.PerlinNoise(noiseCoefficients[0] * xCoord, noiseCoefficients[0] * yCoord)
              + 0.5f * Mathf.PerlinNoise(noiseCoefficients[1] * xCoord, noiseCoefficients[1] * yCoord)

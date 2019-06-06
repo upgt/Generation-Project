@@ -55,7 +55,7 @@ public class Hollow
 
     private float[,] SetHeights()
     {
-        DiamondSquare diamondSquare = new DiamondSquare(width, width, 2, 0.2f, true);
+        DiamondSquare diamondSquare = new DiamondSquare(width, width, 2, 0.05f, true);
 
         float[,] _heights = diamondSquare.DrawPlasma(initBase[0], initBase[1], initBase[2], initBase[3], width, width);
         return _heights;

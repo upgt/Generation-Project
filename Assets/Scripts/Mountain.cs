@@ -52,7 +52,7 @@ namespace Application
 
         private float[,] SetHeights()
         {
-            DiamondSquare diamondSquare = new DiamondSquare(width, width, 1, 0.4f, true);
+            DiamondSquare diamondSquare = new DiamondSquare(width, width, 1, 0.2f, true);
 
             float[,] _heights = diamondSquare.DrawPlasma(initBase[0], initBase[1], initBase[2], initBase[3], width, width);
             return _heights;
