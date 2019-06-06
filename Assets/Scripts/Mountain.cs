@@ -5,53 +5,58 @@ namespace Application
 {
     public class Mountain
     {
-        public int BaseWidth { get; set; }
-        public int Height { get; set; }
-        public double Angle { get; set; }
-        public float[,] Heights { get; private set; }
+        public int X;
+        public int Y;
+        public int width;
 
-        public Mountain(int height, double angle)
+        public float[,] Heights { get; private set; }
+        private float[] initBase = new float[4];
+        public Mountain(int x, int y, int w, float[] initBase)
         {
-            Angle = angle;
-            Height = height;
-            BaseWidth =(int)(Math.Tan(Angle/2) * 2 * Height);
+            X = x;
+            Y = y;
+            width = w;
             Heights = SetHeights();
+            this.initBase = initBase;
+        }
+
+        public void SetOnField(float[,] field)
+        {
+            for (int i = 0; i < width && i < field.GetLength(0); i++)
+            {
+                for (int j = 0; j < width && j < field.GetLength(1); j++)
+                {
+                    if (X + i < field.GetLength(0) && Y + j < field.GetLength(1))
+                        field[X + i, Y + j] += Heights[i, j];
+                }
+            }
+        }
+
+        public void SetMask(float[,] field)
+        {
+
+            int centerX = X + width / 2;
+            int centerY = Y + width / 2;
+            int radius = width / 2;
+            for (int i = 0; i < Heights.GetLength(0) && i < field.GetLength(0); i++)
+            {
+                for (int j = 0; j < Heights.GetLength(1) && j < field.GetLength(1); j++)
+                {
+                    Vector2 vector = new Vector2(X + i - centerX, Y + j - centerY);
+                    if (Math.Sqrt(vector.x * vector.x + vector.y * vector.y) < radius)
+                        if (X + i < field.GetLength(0) && Y + j < field.GetLength(1))
+                        field[X + i,Y + j] = 1;
+                }
+            }
         }
 
         private float[,] SetHeights()
         {
-            float[,] _heights = new float[BaseWidth, BaseWidth];
-            int radius = BaseWidth / 2;
-            Vector center = new Vector(radius, radius);
-            for (int i = 0; i < BaseWidth; i++)
-            {
-                for (int j = 0; j < BaseWidth; j++)
-                {
-                    if (Vector.GetLength(Vector.Add(center, new Vector(i, j))) <= radius)
-                        _heights[i, j] = CalculateHeight(i, j);
-                    else
-                        _heights[i, j] = 0;
-                }
-            }
+            DiamondSquare diamondSquare = new DiamondSquare(width, width, 1, 0.4f, true);
 
+            float[,] _heights = diamondSquare.DrawPlasma(initBase[0], initBase[1], initBase[2], initBase[3], width, width);
             return _heights;
         }
-
-        private float CalculateHeight(int x, int y)
-        {
-            float xCoord = (float)x / BaseWidth + UnityEngine.Random.Range(0, 1000f);
-            float yCoord = (float)y / BaseWidth + UnityEngine.Random.Range(0, 1000f);
-
-            float zCoord = (float)(Math.Cos(Angle) * Math.Sqrt(x * x + y * y) / Math.Sin(Angle));
-
-            return zCoord + Mathf.PerlinNoise(xCoord, yCoord) * 0.2f;
-        }
-
     }
 
-    public class Peak
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-    }
 }
