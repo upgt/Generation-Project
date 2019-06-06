@@ -1,33 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
-using System.Text;
-
+using System.IO;
+public enum groundPattern
+{
+    water = 0,
+    ground = 1,
+    mountain = 2
+}
 namespace Assets.Scripts
 {
-
     public delegate float Calculated(int weight, int height);
 
-    class TreeGenerate : Generator
+    public class TreeGenerate : MonoBehaviour
     {
         public float minTreeScale = 0.4f; // не более 0,9
         public int maxDist = 4;
         public int minDist = 3;
         public int Casts;
         public List<List<TreeInfo>> Trees;
+        public TerrainGenerator hMap;
+        public int broadSmall = 100; // 0 - только широколиственные, 100 - только мелколиственные 
 
         private Terrain terrain;
+        private TerrainGenerator terrainGenerator;
+        private List<int> smallDeciduous;
+        private List<int> broadDeciduous;
         private float[,] heightMap;
         private int height;
         private int width;
-        private List<Vector3> QuestZones; // x = x; y = radius; z = z
+        public List<Vector3> QuestZones; // x = x; y = radius; z = z
         private float xTerrain = 0;
         private float zTerrain = 0;
         private int castCount;
         System.Random rn;
-        private const float MAX_TREE_SCALE = 1;
-        
+        private const float MAX_TREE_SCALE = 3;
+
         public int CastCount
         {
             get { return castCount; }
@@ -44,7 +52,7 @@ namespace Assets.Scripts
                 }
             }
         }
-        
+
         public Terrain Terrain
         {
             get
@@ -63,8 +71,38 @@ namespace Assets.Scripts
             this.heightMap = heightMap;
         }
 
-        private void Start()
+        void TestDesiduous(int protorypeLength)
         {
+            for (int i = 0; i < protorypeLength; i++)
+            {
+                if (Terrain.terrainData.treePrototypes[i].prefab.GetComponent<deciduousTree>() == null)
+                {
+                    throw new ArgumentException("Tree in terrain is not desiduous");
+                }
+            }
+        }
+
+        void Desiduous(int protorypeLength)
+        {
+            smallDeciduous = new List<int>();
+            broadDeciduous = new List<int>();
+            for (int i = 0; i < protorypeLength; i++)
+            {
+                if (!Terrain.terrainData.treePrototypes[i].prefab.GetComponent<deciduousTree>().isBroadLeaved)
+                {
+                    smallDeciduous.Add(i);
+                }
+                else
+                {
+                    broadDeciduous.Add(i);
+                }
+
+            }
+        }
+        private List<Ground_Controiler.GroundInfo> prot;
+        public void treeStart(TerrainGenerator TG, Ground_Controiler GC, groundPattern pattern = groundPattern.ground)
+        {
+            terrainGenerator = TG;
             TreeInfo.maxScale = MAX_TREE_SCALE;
             TreeInfo.minScale = minTreeScale;
             Trees = new List<List<TreeInfo>>();
@@ -73,14 +111,30 @@ namespace Assets.Scripts
             QuestZones = new List<Vector3>();
             height = (int)Terrain.terrainData.size.x;
             width = (int)Terrain.terrainData.size.z;
-
-            heightMap = Terrain.GetComponent<TerrainGenerator>().heightMap;
-
+            TerrainData ter = terrain.terrainData;
+            heightMap = ter.GetHeights(0, 0, ter.heightmapWidth, ter.heightmapHeight);
+            int protorypeLength = Terrain.terrainData.treePrototypes.Length;
+            TestDesiduous(protorypeLength);
+            Desiduous(protorypeLength);
             // Работает только тогда когда в массиве деревьев есть хотя бы одно деревоVector3 position = new Vector3(xTerrain, 0, zTerrain);                     
-            if (Terrain.terrainData.treePrototypes.Length > 0)
+            if (protorypeLength > 0)
             {
                 Vector3 positionEnd = new Vector3(width + xTerrain, 0, height + zTerrain);
-                GenTree(xTerrain, zTerrain);
+                if (pattern == groundPattern.ground)
+                {
+                    prot = GC.Ground;
+                    GenTree();
+                }
+                if (pattern == groundPattern.water)
+                {
+                    prot = GC.Water;
+                    GenTree();
+                }
+                if (pattern == groundPattern.mountain)
+                {
+                    prot = GC.Mountain;
+                    GenTree();
+                }
             }
         }
 
@@ -145,8 +199,66 @@ namespace Assets.Scripts
 
         int GenIndexByParents(int castIndex, Vector2 currentChildIndx)
         {
+            List<int> prIndexCollection = SearchParrent(castIndex, currentChildIndx);
+
+            int chance = rn.Next(1, 99);
+
+            if (prIndexCollection.Count == 0)
+            {
+                int numTreeType;
+                if (chance > broadSmall)
+                {
+                    numTreeType = rn.Next(0, broadDeciduous.Count);
+                    //broad
+                    return broadDeciduous[numTreeType];
+                }
+                else
+                {
+                    numTreeType = rn.Next(0, smallDeciduous.Count);
+                    //small
+                    return smallDeciduous[numTreeType];
+                }
+            }
+            ///
+
+            int countChanse = 0;
+            int j, smallChance;
+            List<int> smallLeafParrentPrototypeIndexs = new List<int>();
+            List<int> broadLeafParrentPrototypeIndexs = new List<int>();
+
+            for (int i = 0; i < prIndexCollection.Count; i++)
+            {
+                j = prIndexCollection[i];
+                bool isBroadLeaf = Terrain.terrainData.treePrototypes[j].prefab.GetComponent<deciduousTree>().isBroadLeaved;
+                if (isBroadLeaf)
+                {
+                    countChanse += 100 - broadSmall;
+                    broadLeafParrentPrototypeIndexs.Add(j);
+                }
+                else
+                {
+                    countChanse += broadSmall;
+                    smallLeafParrentPrototypeIndexs.Add(j);
+                }
+            }
+            smallChance = (broadSmall * 100 * smallLeafParrentPrototypeIndexs.Count) / countChanse;
+
+            if (chance > smallChance)
+            {
+                //broad
+                return broadLeafParrentPrototypeIndexs[rn.Next(broadLeafParrentPrototypeIndexs.Count)];
+            }
+            else
+            {
+                //small
+                return smallLeafParrentPrototypeIndexs[rn.Next(smallLeafParrentPrototypeIndexs.Count)];
+            }
+        }
+
+        private List<int> SearchParrent(int castIndex, Vector2 currentChildIndx)
+        {
             List<int> prIndexCollection = new List<int>();
-            if (castIndex > 1)
+            if (castIndex > 0)
             {
                 for (int i = 0; i < Trees[0].Count; i++)
                 {
@@ -158,15 +270,8 @@ namespace Assets.Scripts
                     }
                 }
             }
-
-            if (prIndexCollection.Count == 0)
-            {
-                return rn.Next(0, terrain.terrainData.treePrototypes.Length);
-            }
-
-            return prIndexCollection[rn.Next(prIndexCollection.Count)];
+            return prIndexCollection;
         }
-
 
 
         void AddTreeCast(int castIndx, float[,] noise)
@@ -180,50 +285,121 @@ namespace Assets.Scripts
             {
                 for (int z = 0; z < height / minDist; z++)
                 {
-
-                    int noiseX = rn.Next(-(int)(minDist * 0.1f), (int)(minDist * 0.1f));
-                    float xNoise = Math.Abs(x + noiseX);
-                    int noiseZ = rn.Next(-(int)(minDist * 0.1f), (int)(minDist * 0.1f));
-                    float zNoise = Math.Abs(z + noiseX);
-                    if (zNoise < height / minDist && xNoise < width / minDist)
-                    {
-                        var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
-                        int cTextureOnTerH = terrain.terrainData.alphamapHeight / height;
-                        int cTextureOnTerW = terrain.terrainData.alphamapWidth / width;
-                        int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ
-
-                        int xCoord = minDist * (int)xNoise;
-                        if (xCoord > 255)
-                        {
-                            xCoord = 255;
-                        }
-                        Vector2 coord = new Vector2(xCoord, zNoise * minDist);
-                        float xD = xNoise * minDist / width;
-                        float zD = zNoise * minDist / height;
-
-                        if (noise[(int)xNoise, (int)zNoise] > minCastParam && noise[(int)xNoise, (int)zNoise] <= maxCastParam)
-                        {
-                            if (!IsPointInZones(coord, QuestZones) &&
-                                (alphaMaps[(int)zNoise * minDist * cTextureOnTerW, (int)xNoise * minDist * cTextureOnTerH, iTextureGraund] < 1))
-                            {
-                                var position = new Vector3(xD, heightMap[xCoord, z], zD);
-                                int prototypeIndex = GenIndexByParents(castIndx, coord);
-                                var tree = new TreeInfo(position, prototypeIndex, noise[(int)xNoise, (int)zNoise]);
-                                Trees[castIndx].Add(tree);
-                            }
-                        }
-
-                    }
+                    Vector2Int pos = new Vector2Int(x, z);
+                    Vector2 castParam = new Vector2(minCastParam, maxCastParam);
+                    AddOneTree(noise, castParam, pos, castIndx);
                 }
             }
         }
 
-        void GenTree(float xTer, float zTer)
+        private void AddOneTree(float[,] noise, Vector2 castParam, Vector2Int pos, int castIndx = 0)
+        {
+            int locNoise = 2 * (rn.Next(minDist * 2) - minDist);
+            float xNoise = Mathf.Abs(pos.x + locNoise * 0.1f);
+            float zNoise = Mathf.Abs(pos.y + locNoise * 0.1f);
+            if (zNoise < height / minDist && xNoise < width / minDist)
+            {
+                var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
+                int cTextureOnTerH = terrain.terrainData.alphamapHeight / height;
+                int cTextureOnTerW = terrain.terrainData.alphamapWidth / width;
+                int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ
+
+                int xCoord = minDist * (int)xNoise;
+                if (xCoord > 255)
+                {
+                    xCoord = 255;
+                }
+                Vector2 coord = new Vector2(xCoord, zNoise * minDist);
+                float xD = xNoise * minDist / width;
+                float zD = zNoise * minDist / height;
+
+                if (noise[(int)xNoise, (int)zNoise] > castParam.x && 
+                    noise[(int)xNoise, (int)zNoise] <= castParam.y)
+                {
+                    if (!IsPointInZones(coord, QuestZones))
+                    {
+                        int prototypeIndex = GenIndexByParents(castIndx, coord);
+                        float dens = terrain.terrainData.treePrototypes[prototypeIndex].prefab.GetComponent<deciduousTree>().densyty;
+                        if (chanseSeating((int)xNoise * minDist * cTextureOnTerH,(int)zNoise * minDist * cTextureOnTerW,dens))
+                        {
+                            var position = new Vector3(xD, heightMap[xCoord, pos.y], zD);
+                            var tree = new TreeInfo(
+                                position, 
+                                prototypeIndex, 
+                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise, (int)zNoise,1.8f));
+                            Trees[castIndx].Add(tree);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        bool chanseSeating(int x, int z, float treeDensity)
+        {
+            Vector2Int protPos = GetPrototypePosition(x, z);
+            if (protPos.x == -1)
+            {
+                return false;
+            }
+            else
+            {
+                float groundDens = prot[protPos.x].density;
+                if (groundDens == 0 || groundDens == 1)
+                {
+                    return false;
+                }
+
+                int chanse = 0;
+                if (groundDens > treeDensity)
+                {
+                    groundDens = 1 - groundDens;
+                }
+                
+
+                chanse = (int)(Math.Round((groundDens * 100 / treeDensity),0) * GetMult(x,z,2.4f));
+                return rn.Next(100) < chanse;
+            }
+        }
+
+        float GetMult(int x, int z, float step)
+        {
+            float mult = terrainGenerator.maskWater[x / 2, z / 2] + step - (terrainGenerator.maskWater[x / 2, z / 2] * 2);
+            if (mult < 0 || mult > 2)
+            {
+                mult = 0;
+            }
+
+            if (mult > 1)
+            {
+                mult = 2 - mult;
+            }
+            return mult;
+        }
+
+        Vector2Int GetPrototypePosition(int x, int z)
+        {
+            var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
+            Vector2Int protPos = new Vector2Int(-1,-1);
+            for (int i = 0; i < prot.Count; i++)
+            {
+                if (alphaMaps[z, x, prot[i]] != 0 && protPos.x == -1)
+                {
+                    protPos.x = prot[i];
+                }
+                if (alphaMaps[z, x, prot[i]] != 0 && protPos.y == -1)
+                {
+                    protPos.y = prot[i];
+                    return protPos;
+                }
+            }
+            return protPos;
+        }
+
+        void GenTree()
         {
             GenCasts();
             Calculated calculated = new Calculated(CalculateHeight);
-            float[,] noise = CreateHeights(width / minDist, height / minDist, calculated);
-            calculated = new Calculated(CalculateHeight);
             float[,] whiteNoise = CreateHeights(width / minDist, height / minDist, calculated);
             for (int i = 0; i < castCount; i++)
             {
@@ -233,7 +409,7 @@ namespace Assets.Scripts
             DrawTreeCast();
         }
 
-        public override float[,] CreateHeights(int w, int h, Calculated calculate)
+        public static float[,] CreateHeights(int w, int h, Calculated calculate)
         {
             float[,] heights = new float[w, h];
             for (int x = 0; x < w; x++)
@@ -246,12 +422,16 @@ namespace Assets.Scripts
             return heights;
         }
 
-        public override float CalculateHeight(int x, int y)
+
+
+        public float CalculateHeight(int x, int y)
         {
-            return 0.001f * rn.Next(0, 1000);
+            float xCoord = (float)x * minDist / (width / minDist) * 20 + 100;
+            float yCoord = (float)y * minDist / (height / minDist) * 20 + 100;
+            return Mathf.PerlinNoise(xCoord, yCoord);
         }
-        
-       
+
+
         private void Update()
         {
             Casts = castCount;

@@ -20,18 +20,21 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: a3f12a31bd1113061100b7a844295342, type: 3}
+        m_Texture: {fileID: 2800000, guid: f8901bdcf0293bd44a24d69a3a2ba2df, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _AO: 1.2264152
-    - _BaseLight: 0.12264151
-    - _Cutoff: 0.6698113
-    - _Occlusion: 0.9433962
+    - _AO: 1.4
+    - _BaseLight: 0.28
+    - _Cutoff: 0.9
+    - _Occlusion: 2.1
+    - _SquashAmount: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _MainTex_ST: {r: 1, g: 1, b: 0, a: 0}
     - _Scale: {r: 1, g: 1, b: 1, a: 1}
+    - _TreeInstanceColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TreeInstanceScale: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1002 &2100001
 EditorExtensionImpl:
   serializedVersion: 6
