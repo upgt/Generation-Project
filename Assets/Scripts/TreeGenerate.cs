@@ -21,6 +21,7 @@ namespace Assets.Scripts
         public List<List<TreeInfo>> Trees;
         public TerrainGenerator hMap;
         public int broadSmall = 100; // 0 - только широколиственные, 100 - только мелколиственные 
+        private RoadsCreator rc;
 
         private Terrain terrain;
         private TerrainGenerator terrainGenerator;
@@ -34,7 +35,9 @@ namespace Assets.Scripts
         private float zTerrain = 0;
         private int castCount;
         System.Random rn;
-        private const float MAX_TREE_SCALE = 3;
+        private const float MAX_TREE_SCALE = 4;
+        private Deleg func;
+        float[,] groundInfo;
 
         public int CastCount
         {
@@ -82,6 +85,11 @@ namespace Assets.Scripts
             }
         }
 
+        bool CheckEqual(float f1, float f2)
+        {
+            return f1 == f2;
+        }
+
         void Desiduous(int protorypeLength)
         {
             smallDeciduous = new List<int>();
@@ -100,11 +108,16 @@ namespace Assets.Scripts
             }
         }
         private List<Ground_Controiler.GroundInfo> prot;
-        public void treeStart(TerrainGenerator TG, Ground_Controiler GC, groundPattern pattern = groundPattern.ground)
+        public void treeStart(TerrainGenerator TG, Ground_Controiler GC, RoadsCreator rc, groundPattern pattern = groundPattern.ground)
         {
             terrainGenerator = TG;
             TreeInfo.maxScale = MAX_TREE_SCALE;
             TreeInfo.minScale = minTreeScale;
+            this.rc = rc;
+            func = new Deleg(CheckEqual);
+            groundInfo = GC.terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
+            groundInfo = TerrainGenerator.CreateMask(groundInfo, -1, func);
+
             Trees = new List<List<TreeInfo>>();
             Terrain = GetComponent<Terrain>();
             rn = new System.Random();
@@ -285,16 +298,20 @@ namespace Assets.Scripts
             {
                 for (int z = 0; z < height / minDist; z++)
                 {
-                    Vector2Int pos = new Vector2Int(x, z);
-                    Vector2 castParam = new Vector2(minCastParam, maxCastParam);
-                    AddOneTree(noise, castParam, pos, castIndx);
+                    if (groundInfo[z * minDist, x * minDist] != 0)
+                        if(rc.treePlaceInfo[z * minDist, x * minDist] != 0)
+                    {
+                        Vector2Int pos = new Vector2Int(x, z);
+                        Vector2 castParam = new Vector2(minCastParam, maxCastParam);
+                        AddOneTree(noise, castParam, pos, castIndx);
+                    }
                 }
             }
         }
 
         private void AddOneTree(float[,] noise, Vector2 castParam, Vector2Int pos, int castIndx = 0)
         {
-            int locNoise = 2 * (rn.Next(minDist * 2) - minDist);
+            float locNoise = (rn.Next(minDist * 2) - minDist) * 1.5f;
             float xNoise = Mathf.Abs(pos.x + locNoise * 0.1f);
             float zNoise = Mathf.Abs(pos.y + locNoise * 0.1f);
             if (zNoise < height / minDist && xNoise < width / minDist)
@@ -326,7 +343,7 @@ namespace Assets.Scripts
                             var tree = new TreeInfo(
                                 position, 
                                 prototypeIndex, 
-                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise, (int)zNoise,1.8f));
+                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise , (int)zNoise,1.8f) * rc.treePlaceInfo[(int)xNoise, (int)zNoise]);
                             Trees[castIndx].Add(tree);
                         }
                     }
@@ -357,14 +374,16 @@ namespace Assets.Scripts
                 }
                 
 
-                chanse = (int)(Math.Round((groundDens * 100 / treeDensity),0) * GetMult(x,z,2.4f));
-                return rn.Next(100) < chanse;
+                chanse = (int)(Math.Round((groundDens * 100 / treeDensity),0) * GetMult(x,z,1.9f));
+                return rn.Next(1, 99) < chanse;
             }
         }
 
         float GetMult(int x, int z, float step)
         {
-            float mult = terrainGenerator.maskWater[x / 2, z / 2] + step - (terrainGenerator.maskWater[x / 2, z / 2] * 2);
+            int cTextureOnTerH = (int)((float)height / terrain.terrainData.alphamapHeight);
+            int cTextureOnTerW = (int)((float)width / terrain.terrainData.alphamapWidth);
+            float mult = terrainGenerator.maskWater[x * cTextureOnTerH, z * cTextureOnTerW] + step - (terrainGenerator.maskWater[x * cTextureOnTerH, z * cTextureOnTerW] * 2);
             if (mult < 0 || mult > 2)
             {
                 mult = 0;

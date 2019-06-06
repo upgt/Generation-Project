@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 [System.Serializable]
 public class Point
@@ -35,7 +36,10 @@ public class RoadsCreator : MonoBehaviour
     private float tooHighCenter = 10000000f; //насколько дорога может меняться по высоте вдоль центральной линии
     private float tooHighLeftRight = 100000000f; //насколько сильно может отличаться высота левого и бравого бока дороги
 
+    private float[,] groundInfo;
+
     TerrainData terrainData;
+    Terrain terrain;
 
     public float[,] roadMask; //где 1f - там НЕ рисуется дорога, где 0f - рисуется.
     bool CheckEqual(float f1, float f2)
@@ -45,7 +49,8 @@ public class RoadsCreator : MonoBehaviour
 
     public void MakeRoads(Road[] roads)
     {
-        terrainData = GetComponent<Terrain>().terrainData;
+        terrain = GetComponent<Terrain>();
+        terrainData = terrain.terrainData;
         func = new Deleg(CheckEqual);
         var heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         float[,] defaultHeightMap = (float[,])heightMap.Clone();
@@ -59,8 +64,10 @@ public class RoadsCreator : MonoBehaviour
 
         int tracksLen = 0; //для непостоянности колеи
 
-        float[,] groundInfo = textures.terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
+        groundInfo = textures.terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
+        
         groundInfo = TerrainGenerator.CreateMask(groundInfo, 0, func);
+        TestFile(groundInfo, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha.txt");
 
         roadMinLength = roadWidth * 4;
 
@@ -600,22 +607,22 @@ public class RoadsCreator : MonoBehaviour
                     }
 
                     // заполнение инфы treePlaceInfo о промежуточных значениях (снизу)
-                    for (int c = 0; c < roadWidth; c++)
+                    for (int c = 0; c < roadWidth*2; c++)
                     {
-                        int coord2 = (int)currentCoord2 - roadWidth * 3 + c;
+                        int coord2 = (int)currentCoord2 - roadWidth * 4 + c;
                         if (isCoord1X && coord2 >= 0 && coord2 < terrainData.heightmapWidth)
-                            treePlaceInfo[coord2, coord1] = 0.5f;
+                            treePlaceInfo[coord2, coord1] = 0f;
                         else if ((!isCoord1X) && coord2 >= 0 && coord2 < terrainData.heightmapHeight)
-                            treePlaceInfo[coord1, coord2] = 0.5f;
+                            treePlaceInfo[coord1, coord2] = 0f;
                     }
                     // (сверху)
-                    for (int d = 0; d < roadWidth; d++)
+                    for (int d = 0; d < roadWidth*2; d++)
                     {
                         int coord2 = (int)currentCoord2 + roadWidth * 2 + d;
                         if (isCoord1X && coord2 >= 0 && coord2 < terrainData.heightmapWidth)
-                            treePlaceInfo[coord2, coord1] = 0.5f;
+                            treePlaceInfo[coord2, coord1] = 0f;
                         else if ((!isCoord1X) && coord2 >= 0 && coord2 < terrainData.heightmapHeight)
-                            treePlaceInfo[coord1, coord2] = 0.5f;
+                            treePlaceInfo[coord1, coord2] = 0f;
                     }
 
                     tracksLen++;
@@ -716,8 +723,8 @@ public class RoadsCreator : MonoBehaviour
 
     private void MakePoint(Point point, float[,] heightMap, float[,] defaultHeightMap)
     {
-        for (int a = -roadWidth * 3; a < roadWidth * 3; a++)
-            for (int b = -roadWidth * 3; b < roadWidth * 3; b++)
+        for (int a = -roadWidth * 5; a < roadWidth * 5; a++)
+            for (int b = -roadWidth * 5; b < roadWidth * 5; b++)
             {
                 int x = point.x + a;
                 int z = point.z + b;
@@ -725,35 +732,40 @@ public class RoadsCreator : MonoBehaviour
 
                 try
                 {
-                    if (len <= 3)
+                    if(len<= 5)
                     {
-                        if (len <= 2)
+                        if (len <= 3)
                         {
-                            float mediumRoadHeight = 0;
-                            int n = 0;
-                            for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
-                                for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
-                                {
-                                    mediumRoadHeight += defaultHeightMap[z, x];
-                                    n++;
-                                }
+                            if (len <= 2)
+                            {
+                                float mediumRoadHeight = 0;
+                                int n = 0;
+                                for (int j = z - roadWidth * 2; j < z + roadWidth * 2; j++)
+                                    for (int k = x - roadWidth * 2; k < x + roadWidth * 2; k++)
+                                    {
+                                        mediumRoadHeight += defaultHeightMap[z, x];
+                                        n++;
+                                    }
 
-                            if (len <= 1)
-                            {
-                                mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
-                                roadMask[z, x] = 0;
+                                if (len <= 1)
+                                {
+                                    mediumRoadHeight = mediumRoadHeight / n - roadLow; // итоговая средняя высота, учитывая понижение дороги
+                                    roadMask[z, x] = 0;
+                                }
+                                else
+                                {
+                                    float coef = (1 + Mathf.Cos(Mathf.PI * (len - 1))) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
+                                    mediumRoadHeight = mediumRoadHeight / n - roadLow * coef; // итоговая средняя высота, учитывая понижение дороги
+                                }
+                                if (mediumRoadHeight < heightMap[z, x])
+                                    heightMap[z, x] = mediumRoadHeight;
+                                treePlaceInfo[z, x] = 0f;
                             }
-                            else
-                            {
-                                float coef = (1 + Mathf.Cos(Mathf.PI * (len - 1))) / 2; //коэфф от 0 до 1, который сглаживает рельеф рядом с дорогой
-                                mediumRoadHeight = mediumRoadHeight / n - roadLow * coef; // итоговая средняя высота, учитывая понижение дороги
-                            }
-                            if (mediumRoadHeight < heightMap[z, x])
-                                heightMap[z, x] = mediumRoadHeight;
-                            treePlaceInfo[z, x] = 0f;
+                            else treePlaceInfo[z, x] = 0f;
                         }
                         else treePlaceInfo[z, x] = 0.5f;
                     }
+                    
                 }
                 catch (System.IndexOutOfRangeException)
                 {
@@ -763,13 +775,33 @@ public class RoadsCreator : MonoBehaviour
         Debug.Log("Made point z = " + point.z.ToString() + "; x = " + point.x.ToString());
     }
 
+    void TestFile(float[,] mask, string path)
+    {
+        StreamWriter sf = new StreamWriter(path);
+        for (int i = 0; i < mask.GetLength(0); i++)
+        {
+            string text = "";
+            for (int j = 0; j < mask.GetLength(1); j++)
+            {
+                text += mask[i, j];
+            }
+            sf.WriteLine(text);
+        }
+        sf.Close();
+    }
+
     // Start is called before the first frame update 
     public void StartRoads()
     {
+        int wqe = 1024;
         if (randomRoads)
             MakeRoads(GetRandomRoads());
         else MakeRoads(roads);
+        //terrainData.alphamapResolution = wqe;
+        //terrainData.baseMapResolution = wqe;
         textures.AddTexture(textures.Road, textures.funk, roadMask);
+        //terrainData.alphamapResolution = 256;
+        //TestFile(groundInfo, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha.txt");
     }
 
     // Update is called once per frame 
