@@ -11,7 +11,7 @@ public class Ground_Controiler : MonoBehaviour
     public class GroundInfo
     {
         public TerrainLayer graund;
-        public float density = 0.5f;
+        //public float density = 0.5f;
         public int protorype = -1;
 
         public static implicit operator TerrainLayer(GroundInfo a)
@@ -24,10 +24,10 @@ public class Ground_Controiler : MonoBehaviour
             return a.protorype;
         }
 
-        public static implicit operator float(GroundInfo a)
+        /*public static implicit operator float(GroundInfo a)
         {
             return a.density;
-        }
+        }*/
     }
 
     public List<GroundInfo> Ground;
@@ -37,7 +37,7 @@ public class Ground_Controiler : MonoBehaviour
     public List<GroundInfo> Road;
     float[,] mask;
     private Terrain terrain;
-    public TerrainGenerator terrainGenerator;
+    private TerrainGenerator terrainGenerator;
     TerrainData terrainData;
     System.Random rn;
 

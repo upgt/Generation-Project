@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.IO;
+
 public enum groundPattern
 {
     water = 0,
     ground = 1,
     mountain = 2
 }
+
 namespace Assets.Scripts
 {
     public delegate float Calculated(int weight, int height);
@@ -15,11 +16,9 @@ namespace Assets.Scripts
     public class TreeGenerate : MonoBehaviour
     {
         public float minTreeScale = 0.4f; // не более 0,9
-        public int maxDist = 4;
         public int minDist = 3;
-        public int Casts;
         public List<List<TreeInfo>> Trees;
-        public TerrainGenerator hMap;
+        private TerrainGenerator hMap;
         public int broadSmall = 100; // 0 - только широколиственные, 100 - только мелколиственные 
         private RoadsCreator rc;
 
@@ -30,7 +29,7 @@ namespace Assets.Scripts
         private float[,] heightMap;
         private int height;
         private int width;
-        public List<Vector3> QuestZones; // x = x; y = radius; z = z
+        private List<Vector3> QuestZones; // x = x; y = radius; z = z
         private float xTerrain = 0;
         private float zTerrain = 0;
         private int castCount;
@@ -110,12 +109,17 @@ namespace Assets.Scripts
         private List<Ground_Controiler.GroundInfo> prot;
         public void treeStart(TerrainGenerator TG, Ground_Controiler GC, RoadsCreator rc, groundPattern pattern = groundPattern.ground)
         {
+            if (minTreeScale < 0.1f)
+                minTreeScale = 0.1f;
+            if (minTreeScale > 0.9f)
+                minTreeScale = 0.9f;
             terrainGenerator = TG;
+            hMap = terrainGenerator;
             TreeInfo.maxScale = MAX_TREE_SCALE;
             TreeInfo.minScale = minTreeScale;
             this.rc = rc;
             func = new Deleg(CheckEqual);
-            groundInfo = GC.terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
+            groundInfo = TG.globalMaskMap;//если меньше 1f, то это земля.
             groundInfo = TerrainGenerator.CreateMask(groundInfo, -1, func);
 
             Trees = new List<List<TreeInfo>>();
@@ -178,11 +182,10 @@ namespace Assets.Scripts
 
         private void GenCasts()
         {
-            castCount = Casts;
-            Casts = castCount;
-            TreeInfo.countCast = Casts;
+            castCount = 2;
+            TreeInfo.countCast = castCount;
 
-            for (int i = 0; i < Casts; i++)
+            for (int i = 0; i < castCount; i++)
             {
                 Trees.Add(new List<TreeInfo>());
             }
@@ -319,7 +322,6 @@ namespace Assets.Scripts
                 var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
                 int cTextureOnTerH = terrain.terrainData.alphamapHeight / height;
                 int cTextureOnTerW = terrain.terrainData.alphamapWidth / width;
-                int iTextureGraund = 1; /// индекс текстуры земли КОСТЫЛЬ
 
                 int xCoord = minDist * (int)xNoise;
                 if (xCoord > 255)
@@ -336,23 +338,20 @@ namespace Assets.Scripts
                     if (!IsPointInZones(coord, QuestZones))
                     {
                         int prototypeIndex = GenIndexByParents(castIndx, coord);
-                        float dens = terrain.terrainData.treePrototypes[prototypeIndex].prefab.GetComponent<deciduousTree>().densyty;
-                        if (chanseSeating((int)xNoise * minDist * cTextureOnTerH,(int)zNoise * minDist * cTextureOnTerW,dens))
-                        {
-                            var position = new Vector3(xD, heightMap[xCoord, pos.y], zD);
-                            var tree = new TreeInfo(
-                                position, 
-                                prototypeIndex, 
-                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise , (int)zNoise,1.8f) * rc.treePlaceInfo[(int)xNoise, (int)zNoise]);
-                            Trees[castIndx].Add(tree);
-                        }
+                        var position = new Vector3(xD, heightMap[xCoord, pos.y], zD);
+                        var tree = new TreeInfo(
+                            position, 
+                            prototypeIndex, 
+                            noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise , (int)zNoise,1.8f) * rc.treePlaceInfo[(int)xNoise, (int)zNoise]);
+                        Trees[castIndx].Add(tree);
+                        
                     }
                 }
 
             }
         }
 
-        bool chanseSeating(int x, int z, float treeDensity)
+        /*bool chanseSeating(int x, int z, float treeDensity)
         {
             Vector2Int protPos = GetPrototypePosition(x, z);
             if (protPos.x == -1)
@@ -377,7 +376,7 @@ namespace Assets.Scripts
                 chanse = (int)(Math.Round((groundDens * 100 / treeDensity),0) * GetMult(x,z,1.9f));
                 return rn.Next(1, 99) < chanse;
             }
-        }
+        }*/
 
         float GetMult(int x, int z, float step)
         {
@@ -453,7 +452,7 @@ namespace Assets.Scripts
 
         private void Update()
         {
-            Casts = castCount;
+
         }
     }
 }
