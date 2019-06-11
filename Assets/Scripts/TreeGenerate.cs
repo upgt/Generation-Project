@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public enum groundPattern
 {
@@ -21,6 +22,7 @@ namespace Assets.Scripts
         private TerrainGenerator hMap;
         public int broadSmall = 100; // 0 - только широколиственные, 100 - только мелколиственные 
         private RoadsCreator rc;
+        public bool wastelands = false;
 
         private Terrain terrain;
         private TerrainGenerator terrainGenerator;
@@ -113,6 +115,8 @@ namespace Assets.Scripts
                 minTreeScale = 0.1f;
             if (minTreeScale > 0.9f)
                 minTreeScale = 0.9f;
+            if (minDist < 3)
+                minDist = 3;
             terrainGenerator = TG;
             hMap = terrainGenerator;
             TreeInfo.maxScale = MAX_TREE_SCALE;
@@ -123,7 +127,7 @@ namespace Assets.Scripts
             groundInfo = TerrainGenerator.CreateMask(groundInfo, -1, func);
 
             Trees = new List<List<TreeInfo>>();
-            Terrain = GetComponent<Terrain>();
+            Terrain = TG.Terrain;
             rn = new System.Random();
             QuestZones = new List<Vector3>();
             height = (int)Terrain.terrainData.size.x;
@@ -182,7 +186,7 @@ namespace Assets.Scripts
 
         private void GenCasts()
         {
-            castCount = 2;
+            castCount = 1;
             TreeInfo.countCast = castCount;
 
             for (int i = 0; i < castCount; i++)
@@ -292,7 +296,7 @@ namespace Assets.Scripts
 
         void AddTreeCast(int castIndx, float[,] noise)
         {
-            float cTS = (MAX_TREE_SCALE - minTreeScale) / castCount;
+            float cTS = (MAX_TREE_SCALE - MAX_TREE_SCALE * minTreeScale) / (castCount * MAX_TREE_SCALE);
             int reverseCastIndex = castCount - castIndx - 1;
             float minCastParam = (cTS * reverseCastIndex) + minTreeScale;
             float maxCastParam = (cTS * (reverseCastIndex + 1)) + minTreeScale;
@@ -301,8 +305,7 @@ namespace Assets.Scripts
             {
                 for (int z = 0; z < height / minDist; z++)
                 {
-                    if (groundInfo[z * minDist, x * minDist] != 0)
-                        if(rc.treePlaceInfo[z * minDist, x * minDist] != 0)
+                    if (rc.treePlaceInfo[z * minDist, x * minDist] != 0)
                     {
                         Vector2Int pos = new Vector2Int(x, z);
                         Vector2 castParam = new Vector2(minCastParam, maxCastParam);
@@ -319,9 +322,6 @@ namespace Assets.Scripts
             float zNoise = Mathf.Abs(pos.y + locNoise * 0.1f);
             if (zNoise < height / minDist && xNoise < width / minDist)
             {
-                var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
-                int cTextureOnTerH = terrain.terrainData.alphamapHeight / height;
-                int cTextureOnTerW = terrain.terrainData.alphamapWidth / width;
 
                 int xCoord = minDist * (int)xNoise;
                 if (xCoord > 255)
@@ -329,26 +329,56 @@ namespace Assets.Scripts
                     xCoord = 255;
                 }
                 Vector2 coord = new Vector2(xCoord, zNoise * minDist);
-                float xD = xNoise * minDist / width;
-                float zD = zNoise * minDist / height;
+                float xD = (float)Math.Round(xNoise * minDist / width, 5);
+                float zD = (float)Math.Round(zNoise * minDist / height, 5);
 
-                if (noise[(int)xNoise, (int)zNoise] > castParam.x && 
-                    noise[(int)xNoise, (int)zNoise] <= castParam.y)
-                {
-                    if (!IsPointInZones(coord, QuestZones))
+                xNoise = xD * width / minDist;
+                zNoise = zD * height / minDist;
+
+                if (isWastedland(noise, (int)xNoise, (int)zNoise, castParam))
+                    if (isWaterPoint((int)xNoise * minDist, (int)zNoise * minDist))
                     {
-                        int prototypeIndex = GenIndexByParents(castIndx, coord);
-                        var position = new Vector3(xD, heightMap[xCoord, pos.y], zD);
-                        var tree = new TreeInfo(
-                            position, 
-                            prototypeIndex, 
-                            noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise , (int)zNoise,1.8f) * rc.treePlaceInfo[(int)xNoise, (int)zNoise]);
-                        Trees[castIndx].Add(tree);
-                        
+                        if (!IsPointInZones(coord, QuestZones))
+                        {
+                            int prototypeIndex = GenIndexByParents(castIndx, coord);
+                            var position = new Vector3(xD, heightMap[xCoord, pos.y], zD);
+                            var tree = new TreeInfo(
+                                position,
+                                prototypeIndex,
+                                noise[(int)xNoise, (int)zNoise] * MAX_TREE_SCALE * GetMult((int)xNoise, (int)zNoise, 1.8f) * rc.treePlaceInfo[(int)xNoise, (int)zNoise]);
+                            Trees[castIndx].Add(tree);
+
+                        }
                     }
-                }
 
             }
+        }
+
+        bool isWastedland(float[,] noise, int x, int z, Vector2 castParam)
+        {
+            int sizeArray = rn.Next(4,6);
+            int X, Z;
+
+            if (wastelands)
+            {
+                X = (x * sizeArray / noise.GetLength(0));
+                Z = (z * sizeArray / noise.GetLength(1));
+            }
+            else
+            {
+                X = x;
+                Z = z;
+            }   
+            return noise[X, Z] > castParam.x &&
+                    noise[X, Z] <= castParam.y;
+        }
+
+        bool isWaterPoint(int x, int z)
+        {
+            if (terrainGenerator.hollowsNumber == 0)
+                return true;
+            else return heightMap[z, x] > 0.4f;
+
         }
 
         /*bool chanseSeating(int x, int z, float treeDensity)
@@ -398,7 +428,7 @@ namespace Assets.Scripts
         Vector2Int GetPrototypePosition(int x, int z)
         {
             var alphaMaps = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
-            Vector2Int protPos = new Vector2Int(-1,-1);
+            Vector2Int protPos = new Vector2Int(-1, -1);
             for (int i = 0; i < prot.Count; i++)
             {
                 if (alphaMaps[z, x, prot[i]] != 0 && protPos.x == -1)
@@ -419,12 +449,30 @@ namespace Assets.Scripts
             GenCasts();
             Calculated calculated = new Calculated(CalculateHeight);
             float[,] whiteNoise = CreateHeights(width / minDist, height / minDist, calculated);
+            TestFile(whiteNoise, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
             for (int i = 0; i < castCount; i++)
             {
                 AddTreeCast(i, whiteNoise);
                 GenTreesQuestZones(i);
             }
             DrawTreeCast();
+        }
+
+        void TestFile(float[,] mask, string path)
+        {
+            StreamWriter sf = new StreamWriter(path);
+            for (int i = 0; i < mask.GetLength(0); i++)
+            {
+                string text = "";
+                for (int j = 0; j < mask.GetLength(1); j++)
+                {
+                    text += mask[i, j];
+                    text += '\t';
+                    text += '\t';
+                }
+                sf.WriteLine(text);
+            }
+            sf.Close();
         }
 
         public static float[,] CreateHeights(int w, int h, Calculated calculate)
@@ -440,12 +488,22 @@ namespace Assets.Scripts
             return heights;
         }
 
-
-
         public float CalculateHeight(int x, int y)
         {
-            float xCoord = (float)x * minDist / (width / minDist) * 20 + 100;
-            float yCoord = (float)y * minDist / (height / minDist) * 20 + 100;
+            float xCoord = (float)x / width * 20 + rn.Next(100);
+            float yCoord = (float)y / height * 20 + rn.Next(100);
+
+            //var _height = (Mathf.PerlinNoise(0.5f * xCoord, 0.5f * yCoord)
+            //     + 0.5f * Mathf.PerlinNoise(1.3f * xCoord, 1.3f * yCoord)
+            //     + 0.25f * Mathf.PerlinNoise(2.2f * xCoord, 2.2f * yCoord)) * 0.2f;
+
+            //_height = (float)Math.Pow(_height, 0.1f);
+
+            //if (wastelands)
+            //{
+            //    float result = (float)(Math.Round(Mathf.PerlinNoise(xCoord, yCoord), 1)*10)%5;
+            //    return result / 4;
+            //}
             return Mathf.PerlinNoise(xCoord, yCoord);
         }
 

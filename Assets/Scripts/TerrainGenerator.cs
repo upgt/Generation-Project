@@ -25,12 +25,13 @@ public class TerrainGenerator : Generator
 
     public float[,] maskWater;
     public float[,] maskGround;
-    
+
+    public Transform water;
 
     public int depth = 256;
     public float[,] heightMap;
     public int height = 256;
-    public int width = 256;
+    private int width;
 
     private float scale;
     private float offsetX;
@@ -68,6 +69,19 @@ public class TerrainGenerator : Generator
     {
         rn = new System.Random();
         Terrain = GetComponent<Terrain>();
+        width = height;
+        if (depth > 400)
+            depth = 400;
+        if (depth < 1)
+            depth = 1;
+        if (water != null && hollowsNumber != 0)
+        {
+            Vector3 v3 = water.transform.localScale;
+            water.transform.localScale = new Vector3(v3.x * height / 256, 1, v3.z * height / 256);
+            water.SetPositionAndRotation(new Vector3(height/2, 0.375f * depth, height/2), Quaternion.identity);
+        }
+            
+        
 
         offsetX = UnityEngine.Random.Range(0, 1000f);
         offsetY = UnityEngine.Random.Range(0, 1000f);
@@ -229,10 +243,7 @@ public class TerrainGenerator : Generator
     {
         Deleg func = new Deleg(CheckEqual);
         terrainData.heightmapResolution = width + 1;
-        if (depth > 400)
-            depth = 400;
-        if (depth < 1)
-            depth = 1;
+        
         terrainData.size = new Vector3(width, depth, height);
 
         SetDefaultNoiseCoefs(1);
@@ -248,11 +259,28 @@ public class TerrainGenerator : Generator
         RandomField(heights);
         LevelMap(globalMaskMap);
 
+        //TestFile(globalMaskMap, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
+
         maskWater = InterpolatedMask(heights);
         terrainData.SetHeights((int)xTerrain, (int)zTerrain, heights);
         return terrainData;
     }
-    
+
+    //void TestFile(float[,] mask, string path)
+    //{
+    //    StreamWriter sf = new StreamWriter(path);
+    //    for (int i = 0; i < mask.GetLength(0); i++)
+    //    {
+    //        string text = "";
+    //        for (int j = 0; j < mask.GetLength(1); j++)
+    //        {
+    //            text += mask[i, j];
+    //            text += '\t';
+    //        }
+    //        sf.WriteLine(text);
+    //    }
+    //    sf.Close();
+    //}
 
     private void RandomField(float[,] field)
     {

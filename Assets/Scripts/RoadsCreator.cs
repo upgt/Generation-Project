@@ -67,9 +67,9 @@ public class RoadsCreator : MonoBehaviour
 
         int tracksLen = 0; //для непостоянности колеи
 
-        groundInfo = terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
+        //groundInfo = terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
         
-        groundInfo = TerrainGenerator.CreateMask(groundInfo, 0, func);
+        //groundInfo = TerrainGenerator.CreateMask(groundInfo, 0, func);
         
 
         roadMinLength = roadWidth * 4;
@@ -182,7 +182,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
                                         if (minHeight == -1f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < minHeight)
                                             minHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
-                                        if (groundInfo[(int)currentCoord2 + k, coord1 + j] == 1f)
+                                        if (defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < 0.4f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] > 0.6f)
                                             roadThrowWater = true;
                                     }
                                     else
@@ -191,7 +191,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
                                         if (minHeight == -1f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < minHeight)
                                             minHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
-                                        if (groundInfo[coord1 + k, (int)currentCoord2 + j] == 1f)
+                                        if (defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < 0.4f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] > 0.6f)
                                             roadThrowWater = true;
                                     }
                                 }
@@ -321,7 +321,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
                                         if (minHeight == -1f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < minHeight)
                                             minHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
-                                        if (groundInfo[(int)currentCoord2 + k, coord1 + j] == 1f)
+                                        if (defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < 0.4f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] > 0.6f)
                                             roadThrowWater = true;
                                     }
                                     else
@@ -330,7 +330,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
                                         if (minHeight == -1f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < minHeight)
                                             minHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
-                                        if (groundInfo[coord1 + k, (int)currentCoord2 + j] == 1f)
+                                        if (defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < 0.4f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] > 0.6f)
                                             roadThrowWater = true;
                                     }
                                 }
