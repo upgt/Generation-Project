@@ -686,12 +686,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   water: {fileID: 80676954}
-  depth: 100
-  height: 256
-  grain: 8
+  depth: 300
+  height: 1000
+  grain: 20
   r: 0.97
-  mountainsNumber: 0
-  hollowsNumber: 2
+  mountainsNumber: 15
+  hollowsNumber: 5
 --- !u!114 &341229299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -721,9 +721,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minTreeScale: 0.5
-  minDist: 256
+  minDist: 1025
   broadSmall: 22
-  wastelands: 1
+  wastelands: 0
 --- !u!114 &341229301
 MonoBehaviour:
   m_ObjectHideFlags: 0

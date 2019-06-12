@@ -305,12 +305,9 @@ namespace Assets.Scripts
             {
                 for (int z = 0; z < height / minDist; z++)
                 {
-                    if (rc.treePlaceInfo[z * minDist, x * minDist] != 0)
-                    {
-                        Vector2Int pos = new Vector2Int(x, z);
-                        Vector2 castParam = new Vector2(minCastParam, maxCastParam);
-                        AddOneTree(noise, castParam, pos, castIndx);
-                    }
+                    Vector2Int pos = new Vector2Int(x, z);
+                    Vector2 castParam = new Vector2(minCastParam, maxCastParam);
+                    AddOneTree(noise, castParam, pos, castIndx);
                 }
             }
         }
@@ -338,7 +335,8 @@ namespace Assets.Scripts
                 if (isWastedland(noise, (int)xNoise, (int)zNoise, castParam))
                     if (isWaterPoint((int)xNoise * minDist, (int)zNoise * minDist))
                     {
-                        if (!IsPointInZones(coord, QuestZones))
+                        if (!IsPointInZones(coord, QuestZones) 
+                            && (rc.treePlaceInfo[(int)zNoise * minDist, (int)xNoise * minDist] != 0))
                         {
                             int prototypeIndex = GenIndexByParents(castIndx, coord);
                             var position = new Vector3(xD, heightMap[xCoord, pos.y], zD);
@@ -356,7 +354,7 @@ namespace Assets.Scripts
 
         bool isWastedland(float[,] noise, int x, int z, Vector2 castParam)
         {
-            int sizeArray = rn.Next(4,6);
+            int sizeArray = rn.Next(4, 6);
             int X, Z;
 
             if (wastelands)
@@ -368,7 +366,7 @@ namespace Assets.Scripts
             {
                 X = x;
                 Z = z;
-            }   
+            }
             return noise[X, Z] > castParam.x &&
                     noise[X, Z] <= castParam.y;
         }
@@ -412,7 +410,11 @@ namespace Assets.Scripts
         {
             int cTextureOnTerH = (int)((float)height / terrain.terrainData.alphamapHeight);
             int cTextureOnTerW = (int)((float)width / terrain.terrainData.alphamapWidth);
-            float mult = terrainGenerator.maskWater[x * cTextureOnTerH, z * cTextureOnTerW] + step - (terrainGenerator.maskWater[x * cTextureOnTerH, z * cTextureOnTerW] * 2);
+            if (x > terrain.terrainData.alphamapWidth)
+                x = terrain.terrainData.alphamapWidth;
+            if (z > terrain.terrainData.alphamapHeight)
+                z = terrain.terrainData.alphamapHeight;
+            float mult = terrainGenerator.normalizedHeightMap[x * cTextureOnTerH, z * cTextureOnTerW] + step - (terrainGenerator.normalizedHeightMap[x * cTextureOnTerH, z * cTextureOnTerW] * 2);
             if (mult < 0 || mult > 2)
             {
                 mult = 0;
@@ -449,7 +451,6 @@ namespace Assets.Scripts
             GenCasts();
             Calculated calculated = new Calculated(CalculateHeight);
             float[,] whiteNoise = CreateHeights(width / minDist, height / minDist, calculated);
-            TestFile(whiteNoise, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
             for (int i = 0; i < castCount; i++)
             {
                 AddTreeCast(i, whiteNoise);

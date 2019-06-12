@@ -33,13 +33,12 @@ public class RoadsCreator : MonoBehaviour
     private int roadMinLength;
     Deleg func;
     //переменные которые ограничивают крутость дороги, прохождение всквозь горы
-    private float tooHighMedium = 10000000f; //насколько сильным может быть перепад высот рядом с дорогой
+    private float tooHighAround = 10000000f; //насколько сильным может быть перепад высот рядом с дорогой
     private float tooHighCenter = 10000000f; //насколько дорога может меняться по высоте вдоль центральной линии
     private float tooHighLeftRight = 100000000f; //насколько сильно может отличаться высота левого и бравого бока дороги
 
     private float[,] groundInfo;
     private float roadLowCoef;
-    //private float tracksLowCoef;
 
     TerrainData terrainData;
     Terrain terrain;
@@ -76,7 +75,6 @@ public class RoadsCreator : MonoBehaviour
 
         foreach (Road road in roads)
         {
-            //try
             var points = road.points;
             for (var i = 0; i < points.Length - 1; i++)
             {
@@ -182,7 +180,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
                                         if (minHeight == -1f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < minHeight)
                                             minHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
-                                        if (defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < 0.4f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] > 0.6f)
+                                        if(isRoadThrowWater(defaultHeightMap, (int)currentCoord2 + k, coord1 + j))
                                             roadThrowWater = true;
                                     }
                                     else
@@ -191,7 +189,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
                                         if (minHeight == -1f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < minHeight)
                                             minHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
-                                        if (defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < 0.4f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] > 0.6f)
+                                        if (isRoadThrowWater(defaultHeightMap, coord1 + k, (int)currentCoord2 + j))
                                             roadThrowWater = true;
                                     }
                                 }
@@ -199,7 +197,7 @@ public class RoadsCreator : MonoBehaviour
                                 {
                                 }
                             }
-                        if (Mathf.Abs(maxHeight - minHeight) > tooHighMedium)
+                        if (Mathf.Abs(maxHeight - minHeight) > tooHighAround)
                             tooHigh = true;
                     }
                     for (int b = -roadWidth; b < roadWidth; b++)
@@ -321,7 +319,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
                                         if (minHeight == -1f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < minHeight)
                                             minHeight = defaultHeightMap[(int)currentCoord2 + k, coord1 + j];
-                                        if (defaultHeightMap[(int)currentCoord2 + k, coord1 + j] < 0.4f || defaultHeightMap[(int)currentCoord2 + k, coord1 + j] > 0.6f)
+                                        if (isRoadThrowWater(defaultHeightMap, (int)currentCoord2 + k, coord1 + j))
                                             roadThrowWater = true;
                                     }
                                     else
@@ -330,7 +328,7 @@ public class RoadsCreator : MonoBehaviour
                                             maxHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
                                         if (minHeight == -1f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < minHeight)
                                             minHeight = defaultHeightMap[coord1 + k, (int)currentCoord2 + j];
-                                        if (defaultHeightMap[coord1 + k, (int)currentCoord2 + j] < 0.4f || defaultHeightMap[coord1 + k, (int)currentCoord2 + j] > 0.6f)
+                                        if (isRoadThrowWater(defaultHeightMap, coord1 + k, (int)currentCoord2 + j))
                                             roadThrowWater = true;
                                     }
                                 }
@@ -338,7 +336,7 @@ public class RoadsCreator : MonoBehaviour
                                 {
                                 }
                             }
-                        if (Mathf.Abs(maxHeight - minHeight) > tooHighMedium)
+                        if (Mathf.Abs(maxHeight - minHeight) > tooHighAround)
                             tooHigh = true;
                     }
 
@@ -614,7 +612,7 @@ public class RoadsCreator : MonoBehaviour
                         int coord2 = (int)currentCoord2 - roadWidth * 6 + c;
                         if (isCoord1X && coord2 >= 0 && coord2 < terrainData.heightmapWidth && treePlaceInfo[coord2, coord1] > 0.5f)
                             treePlaceInfo[coord2, coord1] = 0.5f;
-                        else if ((!isCoord1X) && coord2 >= 0 && coord2 < terrainData.heightmapHeight && treePlaceInfo[coord2, coord1] > 0.5f)
+                        else if ((!isCoord1X) && coord2 >= 0 && coord2 < terrainData.heightmapHeight && treePlaceInfo[coord1, coord2] > 0.5f)
                             treePlaceInfo[coord1, coord2] = 0.5f;
                     }
                     // (сверху)
@@ -631,7 +629,7 @@ public class RoadsCreator : MonoBehaviour
                         int coord2 = (int)currentCoord2 + roadWidth * 5 + d;
                         if (isCoord1X && coord2 >= 0 && coord2 < terrainData.heightmapWidth && treePlaceInfo[coord2, coord1] > 0.5f)
                             treePlaceInfo[coord2, coord1] = 0.5f;
-                        else if ((!isCoord1X) && coord2 >= 0 && coord2 < terrainData.heightmapHeight && treePlaceInfo[coord2, coord1] > 0.5f)
+                        else if ((!isCoord1X) && coord2 >= 0 && coord2 < terrainData.heightmapHeight && treePlaceInfo[coord1, coord2] > 0.5f)
                             treePlaceInfo[coord1, coord2] = 0.5f;
                     }
 
@@ -646,13 +644,10 @@ public class RoadsCreator : MonoBehaviour
                     else MakePoint(points[i + 1], heightMap, defaultHeightMap);
                 }
             }
-            //catch(System.IndexOutOfRangeException)
-            {
-            }
         }
         roadMask = MixRoadMask(roadMask, 2);
         terrainData.SetHeights(0, 0, heightMap);
-        //TestFile(treePlaceInfo, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
+        TestFile(treePlaceInfo, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
     }
 
     public Road[] GetRandomRoads()
@@ -783,7 +778,7 @@ public class RoadsCreator : MonoBehaviour
         Debug.Log("Made point z = " + point.z.ToString() + "; x = " + point.x.ToString());
     }
 
-    /*void TestFile(float[,] mask, string path)
+    void TestFile(float[,] mask, string path)
     {
         StreamWriter sf = new StreamWriter(path);
         for (int i = 0; i < mask.GetLength(0); i++)
@@ -792,11 +787,12 @@ public class RoadsCreator : MonoBehaviour
             for (int j = 0; j < mask.GetLength(1); j++)
             {
                 text += mask[i, j];
+                text += '\t';
             }
             sf.WriteLine(text);
         }
         sf.Close();
-    }*/
+    }
 
     // Start is called before the first frame update 
     public void StartRoads(Ground_Controiler gc, TerrainGenerator tg)
@@ -814,6 +810,13 @@ public class RoadsCreator : MonoBehaviour
             MakeRoads(GetRandomRoads());
         else MakeRoads(roads);
         textures.AddTexture(textures.Road, textures.funk, roadMask);
+    }
+
+    private bool isRoadThrowWater(float[,] defaultHeightMap, int z, int x)
+    {
+        if (terrainGenerator.hollowsNumber == 0 && terrainGenerator.mountainsNumber == 0)
+            return false;
+        return (defaultHeightMap[z, x] < 0.4f || defaultHeightMap[z, x] > 0.6f);
     }
 
     // Update is called once per frame 

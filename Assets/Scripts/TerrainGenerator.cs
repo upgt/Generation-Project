@@ -21,10 +21,8 @@ public class TerrainGenerator : Generator
     private List<float> maskCollect;
     public float[,] maskWMap;
     public float[,] globalMaskMap;
-    float groundRelief = 0.8f; // Холмистость рельефа земли
 
-    public float[,] maskWater;
-    public float[,] maskGround;
+    public float[,] normalizedHeightMap;
 
     public Transform water;
 
@@ -69,6 +67,7 @@ public class TerrainGenerator : Generator
     {
         rn = new System.Random();
         Terrain = GetComponent<Terrain>();
+        height = GetPow2Height(height);
         width = height;
         if (depth > 400)
             depth = 400;
@@ -95,7 +94,18 @@ public class TerrainGenerator : Generator
         }
     }
 
-    
+    private int GetPow2Height(int height)
+    {
+        int tester = 64;
+        //if (height > 513)
+        //    return 513;
+        while(tester < height)
+        {
+            tester = tester * 2;
+        }
+        return tester + 1;
+    }
+
     private float GetMaxParam(float[,] mask)
     {
         float result = 0;
@@ -122,11 +132,21 @@ public class TerrainGenerator : Generator
         return result;
     }
 
-    private float[,] InterpolatedMask(float[,] mask)
+    private float[,] NormalizeMask(float[,] mask)
     {
         float[,] maskTerrain = new float[width, height];
-        float minParam = GetMinParam(mask);
-        float maxParam = GetMaxParam(mask) - minParam;
+        float minParam, maxParam, coef;
+        if (mountainsNumber != 0 && hollowsNumber != 0)
+        {
+            coef = Math.Min(hollowsNumber / mountainsNumber, mountainsNumber / hollowsNumber);
+            minParam = GetMinParam(mask) * coef;
+            maxParam = 1 - ((GetMaxParam(mask) - minParam) * coef);
+        }
+        else
+        {
+            minParam = GetMinParam(mask);
+            maxParam = GetMaxParam(mask) - minParam;
+        }
         float param;
         for (int i = 0; i < width; i++)
         {
@@ -259,28 +279,30 @@ public class TerrainGenerator : Generator
         RandomField(heights);
         LevelMap(globalMaskMap);
 
-        //TestFile(globalMaskMap, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
+        normalizedHeightMap = NormalizeMask(heights);
+        //maskWater = heights;
 
-        maskWater = InterpolatedMask(heights);
+        //TestFile(maskWater, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
+
         terrainData.SetHeights((int)xTerrain, (int)zTerrain, heights);
         return terrainData;
     }
 
-    //void TestFile(float[,] mask, string path)
-    //{
-    //    StreamWriter sf = new StreamWriter(path);
-    //    for (int i = 0; i < mask.GetLength(0); i++)
-    //    {
-    //        string text = "";
-    //        for (int j = 0; j < mask.GetLength(1); j++)
-    //        {
-    //            text += mask[i, j];
-    //            text += '\t';
-    //        }
-    //        sf.WriteLine(text);
-    //    }
-    //    sf.Close();
-    //}
+    void TestFile(float[,] mask, string path)
+    {
+        StreamWriter sf = new StreamWriter(path);
+        for (int i = 0; i < mask.GetLength(0); i++)
+        {
+            string text = "";
+            for (int j = 0; j < mask.GetLength(1); j++)
+            {
+                text += mask[i, j].ToString().Substring(0,3);
+                text += '\t';
+            }
+            sf.WriteLine(text);
+        }
+        sf.Close();
+    }
 
     private void RandomField(float[,] field)
     {

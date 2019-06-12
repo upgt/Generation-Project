@@ -73,7 +73,7 @@ public class Ground_Controiler : MonoBehaviour
     public void StartGroundControl(TerrainGenerator TG)
     {
         terrainGenerator = TG;
-        mask = TG.maskWater;
+        mask = TG.normalizedHeightMap;
         rn = new System.Random();
         funk = new Calculated(CalculateHeight);
         terrain = GetComponent<Terrain>();
@@ -95,7 +95,7 @@ public class Ground_Controiler : MonoBehaviour
         }
     }
 
-    public void AddTexture(List<GroundInfo> texPrototypes, Calculated funk, int step)
+    public void AddTexture(List<GroundInfo> texPrototypes, Calculated funk, int groundType)
     {
         TestLayer(texPrototypes);
         float alpha;
@@ -115,27 +115,40 @@ public class Ground_Controiler : MonoBehaviour
                 // Y альфамапы = X глобальных координат
                 X = (int)(x * multX);
                 Z = (int)(z * multZ);
-                float mult = mask[X, Z] + step - (mask[X, Z] * 3);
+                float invertHeight;
+                float textureIntensive = 0;
+                if (mask[X, Z] > 0.5f)
+                    invertHeight = 1 - mask[X, Z];
+                else invertHeight = mask[X, Z];
 
-                if (mult < 0 || mult > 2)
+                invertHeight = (invertHeight - 0.15f) * 2;
+
+                
+                if (invertHeight < 0 && (mask[X, Z].CompareTo(0.5f) == groundType - 2 || groundType == 2))
+                    textureIntensive = groundType % 2;
+                else if (invertHeight >= 0.5f && (mask[X, Z] > 0.4f || mask[X, Z] < 0.6f))
+                    textureIntensive = (groundType + 1) % 2;
+                else textureIntensive = mask[X, Z] + groundType - (mask[X, Z] * 3);
+
+                if (textureIntensive < 0 || textureIntensive > 2)
                 {
-                    mult = 0;
+                    textureIntensive = 0;
                 }
 
-                if (mult > 1)
+                if (textureIntensive > 1)
                 {
-                    mult = 2 - mult;
+                    textureIntensive = 2 - textureIntensive;
                 }
 
                 alpha = heights[x, z] * preDomTextGraund;
                 if (protIndx == protIndxTwo)
                 {
-                    alphaMaps[x, z, texPrototypes[protIndx]] = mult;
+                    alphaMaps[x, z, texPrototypes[protIndx]] = textureIntensive;
                 }
                 else
                 {
-                    alphaMaps[x, z, texPrototypes[protIndx]] = alpha * mult;
-                    alphaMaps[x, z, texPrototypes[protIndxTwo]] = (1 - alpha) * mult;
+                    alphaMaps[x, z, texPrototypes[protIndx]] = alpha * textureIntensive;
+                    alphaMaps[x, z, texPrototypes[protIndxTwo]] = (1 - alpha) * textureIntensive;
                     Normalize(alphaMaps, x, z);
                 }
             }
@@ -178,7 +191,7 @@ public class Ground_Controiler : MonoBehaviour
                         alphaMaps[x, z, texPrototypes[protTwo]] = 1 - alpha;
                         zeroAnother(alphaMaps, texPrototypes[prot], texPrototypes[protTwo], x, z);
                     }
-                    
+
                 }
             }
         }
@@ -209,7 +222,7 @@ public class Ground_Controiler : MonoBehaviour
             string text = "";
             for (int j = 0; j < mask.GetLength(1); j++)
             {
-                text += mask[i, j,ma].ToString() + '\t' + '\t' + '\t';
+                text += mask[i, j, ma].ToString() + '\t' + '\t' + '\t';
             }
             sf.WriteLine(text);
         }
