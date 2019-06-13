@@ -73,6 +73,8 @@ public class TerrainGenerator : Generator
             depth = 400;
         if (depth < 1)
             depth = 1;
+        if (hollowsNumber == mountainsNumber && hollowsNumber != 0)
+            mountainsNumber++;
         if (water != null && hollowsNumber != 0)
         {
             Vector3 v3 = water.transform.localScale;
@@ -97,9 +99,9 @@ public class TerrainGenerator : Generator
     private int GetPow2Height(int height)
     {
         int tester = 64;
-        //if (height > 513)
-        //    return 513;
-        while(tester < height)
+        if (height > 1026)
+            return 2049;
+        while(tester < height - 1)
         {
             tester = tester * 2;
         }
@@ -279,10 +281,12 @@ public class TerrainGenerator : Generator
         RandomField(heights);
         LevelMap(globalMaskMap);
 
+        //TestFile(heights, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
+
         normalizedHeightMap = NormalizeMask(heights);
         //maskWater = heights;
 
-        //TestFile(maskWater, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
+        
 
         terrainData.SetHeights((int)xTerrain, (int)zTerrain, heights);
         return terrainData;

@@ -23,6 +23,7 @@ namespace Assets.Scripts
         public int broadSmall = 100; // 0 - только широколиственные, 100 - только мелколиственные 
         private RoadsCreator rc;
         public bool wastelands = false;
+        private int offset = 0;
 
         private Terrain terrain;
         private TerrainGenerator terrainGenerator;
@@ -129,6 +130,7 @@ namespace Assets.Scripts
             Trees = new List<List<TreeInfo>>();
             Terrain = TG.Terrain;
             rn = new System.Random();
+            offset = rn.Next(10000);
             QuestZones = new List<Vector3>();
             height = (int)Terrain.terrainData.size.x;
             width = (int)Terrain.terrainData.size.z;
@@ -294,7 +296,7 @@ namespace Assets.Scripts
         }
 
 
-        void AddTreeCast(int castIndx, float[,] noise)
+        void AddTreeCast(int castIndx)
         {
             float cTS = (MAX_TREE_SCALE - MAX_TREE_SCALE * minTreeScale) / (castCount * MAX_TREE_SCALE);
             int reverseCastIndex = castCount - castIndx - 1;
@@ -307,16 +309,23 @@ namespace Assets.Scripts
                 {
                     Vector2Int pos = new Vector2Int(x, z);
                     Vector2 castParam = new Vector2(minCastParam, maxCastParam);
-                    AddOneTree(noise, castParam, pos, castIndx);
+                    AddOneTree(castParam, pos, castIndx);
                 }
             }
         }
 
-        private void AddOneTree(float[,] noise, Vector2 castParam, Vector2Int pos, int castIndx = 0)
+        private void AddOneTree(Vector2 castParam, Vector2Int pos, int castIndx = 0)
         {
             float locNoise = (rn.Next(minDist * 2) - minDist) * 1.5f;
             float xNoise = Mathf.Abs(pos.x + locNoise * 0.1f);
             float zNoise = Mathf.Abs(pos.y + locNoise * 0.1f);
+
+            Calculated calculated = new Calculated(CalculateHeight);
+            float[,] noise;
+
+            noise = CreateHeights(width / minDist, height / minDist, calculated, minTreeScale);
+            
+
             if (zNoise < height / minDist && xNoise < width / minDist)
             {
 
@@ -354,21 +363,8 @@ namespace Assets.Scripts
 
         bool isWastedland(float[,] noise, int x, int z, Vector2 castParam)
         {
-            int sizeArray = rn.Next(4, 6);
-            int X, Z;
-
-            if (wastelands)
-            {
-                X = (x * sizeArray / noise.GetLength(0));
-                Z = (z * sizeArray / noise.GetLength(1));
-            }
-            else
-            {
-                X = x;
-                Z = z;
-            }
-            return noise[X, Z] > castParam.x &&
-                    noise[X, Z] <= castParam.y;
+            return noise[x, z] > castParam.x &&
+                    noise[x, z] <= castParam.y;
         }
 
         bool isWaterPoint(int x, int z)
@@ -449,11 +445,10 @@ namespace Assets.Scripts
         void GenTree()
         {
             GenCasts();
-            Calculated calculated = new Calculated(CalculateHeight);
-            float[,] whiteNoise = CreateHeights(width / minDist, height / minDist, calculated);
+            
             for (int i = 0; i < castCount; i++)
             {
-                AddTreeCast(i, whiteNoise);
+                AddTreeCast(i);
                 GenTreesQuestZones(i);
             }
             DrawTreeCast();
@@ -489,10 +484,28 @@ namespace Assets.Scripts
             return heights;
         }
 
+        public float[,] CreateHeights(int w, int h, Calculated calculate, float minTree)
+        {
+            float[,] heights = new float[w, h];
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+
+                    heights[x, y] = calculate.Invoke(x, y);
+                    if (!wastelands && heights[x, y] < minTree)
+                    {
+                        heights[x, y] = minTree + 0.1f;
+                    }
+                }
+            }
+            return heights;
+        }
+
         public float CalculateHeight(int x, int y)
         {
-            float xCoord = (float)x / width * 20 + rn.Next(100);
-            float yCoord = (float)y / height * 20 + rn.Next(100);
+            float xCoord = (float)x / width * 20 + offset;
+            float yCoord = (float)y / height * 20 + offset;
 
             //var _height = (Mathf.PerlinNoise(0.5f * xCoord, 0.5f * yCoord)
             //     + 0.5f * Mathf.PerlinNoise(1.3f * xCoord, 1.3f * yCoord)

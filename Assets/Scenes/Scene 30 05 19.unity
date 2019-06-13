@@ -686,12 +686,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   water: {fileID: 80676954}
-  depth: 300
-  height: 1000
+  depth: 100
+  height: 256
   grain: 20
   r: 0.97
-  mountainsNumber: 15
-  hollowsNumber: 5
+  mountainsNumber: 10
+  hollowsNumber: 10
 --- !u!114 &341229299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -721,7 +721,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minTreeScale: 0.5
-  minDist: 1025
+  minDist: 1000
   broadSmall: 22
   wastelands: 0
 --- !u!114 &341229301
@@ -740,7 +740,7 @@ MonoBehaviour:
   roadLow: 0.1
   randomRoads: 1
   tracks: 1
-  amountOfRandomRoads: 3
+  amountOfRandomRoads: 0
   roads:
   - points:
     - x: 0
