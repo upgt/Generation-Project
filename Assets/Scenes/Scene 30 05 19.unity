@@ -690,8 +690,8 @@ MonoBehaviour:
   height: 256
   grain: 20
   r: 0.97
-  mountainsNumber: 10
-  hollowsNumber: 10
+  mountainsNumber: 1
+  hollowsNumber: 0
 --- !u!114 &341229299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -721,7 +721,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minTreeScale: 0.5
-  minDist: 1000
+  minDist: 10
   broadSmall: 22
   wastelands: 0
 --- !u!114 &341229301
@@ -740,7 +740,7 @@ MonoBehaviour:
   roadLow: 0.1
   randomRoads: 1
   tracks: 1
-  amountOfRandomRoads: 0
+  amountOfRandomRoads: 3
   roads:
   - points:
     - x: 0

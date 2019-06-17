@@ -31,29 +31,23 @@ public class RoadsCreator : MonoBehaviour
     public Road[] roads;
     public float[,] treePlaceInfo; //информация о возможности рассадки деревьев, 0 - нельзя
     private int roadMinLength;
-    Deleg func;
+
     //переменные которые ограничивают крутость дороги, прохождение всквозь горы
     private float tooHighAround = 10000000f; //насколько сильным может быть перепад высот рядом с дорогой
     private float tooHighCenter = 10000000f; //насколько дорога может меняться по высоте вдоль центральной линии
     private float tooHighLeftRight = 100000000f; //насколько сильно может отличаться высота левого и бравого бока дороги
-
-    private float[,] groundInfo;
+    
     private float roadLowCoef;
 
     TerrainData terrainData;
     Terrain terrain;
 
     public float[,] roadMask; //где 1f - там НЕ рисуется дорога, где 0f - рисуется.
-    bool CheckEqual(float f1, float f2)
-    {
-        return f1 == f2;
-    }
 
     public void MakeRoads(Road[] roads)
     {
         terrain = GetComponent<Terrain>();
         terrainData = terrain.terrainData;
-        func = new Deleg(CheckEqual);
         var heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         float[,] defaultHeightMap = (float[,])heightMap.Clone();
 
@@ -65,12 +59,7 @@ public class RoadsCreator : MonoBehaviour
         roadMask = (float[,])treePlaceInfo.Clone();
 
         int tracksLen = 0; //для непостоянности колеи
-
-        //groundInfo = terrainGenerator.globalMaskMap;//если меньше 1f, то это земля.
         
-        //groundInfo = TerrainGenerator.CreateMask(groundInfo, 0, func);
-        
-
         roadMinLength = roadWidth * 4;
 
         foreach (Road road in roads)
@@ -131,8 +120,6 @@ public class RoadsCreator : MonoBehaviour
                         {
                             isCoord1X = true;
                             coord1 = a + minX;
-                            if (coord1 < 0 || coord1 >= terrainData.heightmapHeight)
-                                continue;
                             float deltaCoord2 = deltaZ * ((float)(coord1 - minX) / deltaX); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
                             float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minX) / deltaX)) * actualRoadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
@@ -144,13 +131,13 @@ public class RoadsCreator : MonoBehaviour
                                     startPoint = points[i];
                                 else startPoint = points[i + 1];
                             }
+                            if (coord1 < 0 || coord1 >= terrainData.heightmapHeight)
+                                continue;
                         }
                         else
                         {
                             isCoord1X = false;
                             coord1 = a + minZ;
-                            if (coord1 < 0 || coord1 >= terrainData.heightmapWidth)
-                                continue;
                             float deltaCoord2 = deltaX * ((float)(coord1 - minZ) / deltaZ); // дельта второй координаты точки на отрезке между point i и point i+1 (расстояние от мин/макс)
                             float flexure = Mathf.Sin(2 * Mathf.PI * ((float)(coord1 - minZ) / deltaZ)) * actualRoadFlexure; // отклонение (изгиб) дороги по синусоиде
                             currentCoord2 = fromLeftUnderToRightUpper ? // вторая координата точки учитывая отклонение
@@ -162,6 +149,8 @@ public class RoadsCreator : MonoBehaviour
                                     startPoint = points[i];
                                 else startPoint = points[i + 1];
                             }
+                            if (coord1 < 0 || coord1 >= terrainData.heightmapWidth)
+                                continue;
                         }
                     }
 
@@ -647,7 +636,7 @@ public class RoadsCreator : MonoBehaviour
         }
         roadMask = MixRoadMask(roadMask, 2);
         terrainData.SetHeights(0, 0, heightMap);
-        TestFile(treePlaceInfo, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
+        //TestFile(treePlaceInfo, @"C:\Users\Computer\Documents\GitHub\Generation-Project\Assets\WriteAlpha0.txt");
     }
 
     public Road[] GetRandomRoads()
@@ -778,21 +767,21 @@ public class RoadsCreator : MonoBehaviour
         Debug.Log("Made point z = " + point.z.ToString() + "; x = " + point.x.ToString());
     }
 
-    void TestFile(float[,] mask, string path)
-    {
-        StreamWriter sf = new StreamWriter(path);
-        for (int i = 0; i < mask.GetLength(0); i++)
-        {
-            string text = "";
-            for (int j = 0; j < mask.GetLength(1); j++)
-            {
-                text += mask[i, j];
-                text += '\t';
-            }
-            sf.WriteLine(text);
-        }
-        sf.Close();
-    }
+    //void TestFile(float[,] mask, string path)
+    //{
+    //    StreamWriter sf = new StreamWriter(path);
+    //    for (int i = 0; i < mask.GetLength(0); i++)
+    //    {
+    //        string text = "";
+    //        for (int j = 0; j < mask.GetLength(1); j++)
+    //        {
+    //            text += mask[i, j];
+    //            text += '\t';
+    //        }
+    //        sf.WriteLine(text);
+    //    }
+    //    sf.Close();
+    //}
 
     // Start is called before the first frame update 
     public void StartRoads(Ground_Controiler gc, TerrainGenerator tg)
